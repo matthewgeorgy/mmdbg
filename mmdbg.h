@@ -10,7 +10,7 @@
 
 static int malloc_cnt;
 static size_t total_alloc;
-node_t *malloc_head = NULL;
+mmdbg_node_t *malloc_head = NULL;
 
 void*
 mmdbg_malloc(size_t size,
@@ -32,7 +32,7 @@ mmdbg_malloc(size_t size,
         printf("on line:    %u\n", line);
         printf("count:      %d\n", malloc_cnt);
         printf("-------------------------------------\n");
-        node_append(&malloc_head, ptr);
+        mmdbg_node_append(&malloc_head, ptr);
     }
     // if allocation failed
     else
@@ -63,7 +63,7 @@ mmdbg_free(void *buffer,
     printf("count:      %d\n", malloc_cnt);
     printf("-------------------------------------\n");
 
-    node_remove(&malloc_head, buffer);
+    mmdbg_node_remove(&malloc_head, buffer);
     // free the buffer
     free(buffer);
 }
@@ -71,7 +71,7 @@ mmdbg_free(void *buffer,
 void
 mmdbg_print_c(FILE *stream)
 {
-    node_t *temp = malloc_head;
+    mmdbg_node_t *temp = malloc_head;
 
     while (temp != NULL)
     {

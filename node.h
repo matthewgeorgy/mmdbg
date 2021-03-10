@@ -1,21 +1,21 @@
-#ifndef NODE_H
-#define NODE_H
+#ifndef MMDBG_NODE_H
+#define MMDBG_NODE_H
 
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct _TAG_node
+typedef struct _TAG_mmdbg_node
 {
     void *ptr;
-    struct _TAG_node *next;
-} node_t;
+    struct _TAG_mmdbg_node *next;
+} mmdbg_node_t;
 
 void
-node_append(node_t **head, void *ptr)
+mmdbg_node_append(mmdbg_node_t **head,
+                  void *ptr)
 {
-    
 	// Allocate and fill new node
-    node_t *new_node = (node_t *)malloc(sizeof(node_t));
+    mmdbg_node_t *new_node = (mmdbg_node_t *)malloc(sizeof(mmdbg_node_t));
     new_node->ptr = ptr;
 	new_node->next = NULL;
 
@@ -27,7 +27,7 @@ node_append(node_t **head, void *ptr)
     else
     {
         // Find last node
-        node_t *temp = *head;
+        mmdbg_node_t *temp = *head;
         while (temp->next != NULL)
             temp = temp->next;
 
@@ -37,53 +37,34 @@ node_append(node_t **head, void *ptr)
 }
 
 void
-node_remove(node_t **head, void *ptr)
+mmdbg_node_remove(mmdbg_node_t **head,
+                  void *ptr)
 {
-    // List empty
-    if (*head == NULL)
+    mmdbg_node_t *temp = *head;
+    mmdbg_node_t *prev;
+
+    // First node contains the ptr.
+    if (temp != NULL && temp->ptr == ptr)
+    {
+        *head = temp->next;
+        free(temp);
         return;
-
-    node_t *temp = *head;
-    node_t *prev;
-
-    // One node in list
-    if (temp != NULL && temp->next == NULL)
-    {
-        free(temp);
     }
 
-	// Head node contains the ptr
-    else if (temp != NULL && temp->ptr == ptr)
-    {
-        *head = (*head)->next;
-        free(temp);
-    }
-
-	// Search the list
+    // Otherwise, traverse list to find the node.
     else
     {
-        prev = temp;
-        temp = temp->next;
-
-        // Traverse list to find the node with ptr
-        while (temp->next != NULL)
+        // Search the list.
+        while (temp != NULL && temp->ptr != ptr)
         {
-            // Remove node
-            if (temp->ptr == ptr)
-            {
-                prev->next = temp->next;
-                free(temp);
-            }
-            // Keep walking through
-            else
-            {
-                prev = temp; 
-                temp = temp->next;
-            }
-
+            prev = temp;
+            temp = temp->next;
         }
 
+        // Reconnect list and remove the node.
+        prev->next = temp->next;
+        free(temp);
     }
 }
 
-#endif // NODE_H
+#endif // MMDBG_NODE_H
