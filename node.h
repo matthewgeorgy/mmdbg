@@ -7,22 +7,28 @@
 typedef struct _TAG_mmdbg_node
 {
     void *ptr;
+    char *file;
+    int line;
     struct _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
 void
 mmdbg_node_append(mmdbg_node_t **head,
-                  void *ptr)
+                  void *ptr,
+                  char *file,
+                  int line)
 {
 	// Allocate and fill new node
     mmdbg_node_t *new_node = (mmdbg_node_t *)malloc(sizeof(mmdbg_node_t));
     new_node->ptr = ptr;
+    new_node->file = file;
+    new_node->line = line;
 	new_node->next = NULL;
 
     // If list is empty
     if (*head == NULL)
     {
-        *head = new_node; printf("HERE\n");
+        *head = new_node;
     }
     else
     {

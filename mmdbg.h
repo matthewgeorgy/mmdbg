@@ -3,18 +3,23 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "node.h"
+
+// Macro to strip just the filename out of the full path.
+#define __FILENAME__	(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 
 // C
 #ifdef MMDBG_C
 
 static int malloc_cnt;
+static int free_cnt;
 static size_t total_alloc;
 mmdbg_node_t *malloc_head = NULL;
 
 void*
 mmdbg_malloc(size_t size,
-             const char *file,
+             char *file,
              int line)
 {
     void *ptr = malloc(size);
@@ -24,25 +29,29 @@ mmdbg_malloc(size_t size,
     {
         // print allocation info
         malloc_cnt++;
-        total_alloc += size;
+		total_alloc += size;
+#ifdef MMDBG_DUMP_PRINT
         printf("-------------------------------------\n");
         printf("MALLOC:     %u bytes\n", size);
         printf("at address: %p\n", ptr);
         printf("in file:    %s\n", file);
         printf("on line:    %u\n", line);
-        printf("count:      %d\n", malloc_cnt);
+        printf("count:      %d\n", malloc_cnt - free_cnt);
         printf("-------------------------------------\n");
-        mmdbg_node_append(&malloc_head, ptr);
+#endif
+        mmdbg_node_append(&malloc_head, ptr, file, line);
     }
     // if allocation failed
     else
     {
         // print allocation info
+#ifdef MMDBG_DUMP_PRINT
         printf("-------------------------------------\n");
         printf("FAILED: %zu bytes\n", size);
         printf("in file: %s\n", file);
         printf("on line: %u\n", line);
         printf("-------------------------------------\n");
+#endif 
     }
     
     // return ptr regardless
@@ -51,18 +60,19 @@ mmdbg_malloc(size_t size,
 
 void
 mmdbg_free(void *buffer,
-           const char *file,
+           char *file,
            int line)
 {
     // print freeing info
-    malloc_cnt--;
+    free_cnt++;
+#ifdef MMDBG_DUMP_PRINT
     printf("-------------------------------------\n");
     printf("FREED:      %p\n", buffer);
     printf("at file:    %s\n", file);
     printf("on line:    %u\n", line);
-    printf("count:      %d\n", malloc_cnt);
+    printf("count:      %d\n", malloc_cnt - free_cnt);
     printf("-------------------------------------\n");
-
+#endif
     mmdbg_node_remove(&malloc_head, buffer);
     // free the buffer
     free(buffer);
@@ -71,18 +81,27 @@ mmdbg_free(void *buffer,
 void
 mmdbg_print_c(FILE *stream)
 {
+	fprintf(stream, "=========================================================\n");
+	fprintf(stream, "                    MMDBG OUTPUT\n");
+	fprintf(stream, "=========================================================\n");
+    fprintf(stream, "Total Mallocs: %d\n", malloc_cnt);
+    fprintf(stream, "Total Frees:   %d\n", free_cnt);
+    fprintf(stream, "Total Size:    %d bytes\n", total_alloc);
     mmdbg_node_t *temp = malloc_head;
 
     while (temp != NULL)
     {
-        fprintf(stream, "WARNING: UNFREED MEMORY -> %p\n", temp->ptr);
+        fprintf(stream, "\nWARNING: UNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr, temp->file, temp->line);
         temp = temp->next;
     }
+	fprintf(stream, "\n=========================================================\n");
+	fprintf(stream, "                    END OF OUTPUT\n");
+	fprintf(stream, "=========================================================\n");
 }
 
 // wrap malloc() and free()
-#define malloc(size)    mmdbg_malloc(size, __FILE__, __LINE__)
-#define free(buffer)    mmdbg_free(buffer, __FILE__, __LINE__)
+#define malloc(size)    mmdbg_malloc(size, __FILENAME__, __LINE__)
+#define free(buffer)    mmdbg_free(buffer, __FILENAME__, __LINE__)
 
 #endif // MMDBG_C
 
