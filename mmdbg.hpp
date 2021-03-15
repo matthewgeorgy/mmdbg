@@ -14,22 +14,49 @@ static int delete_cnt;
 static size_t total_alloc;
 mmdbg_node_t *new_head = NULL;
 
-void *operator new(size_t size, char, char *file, int line)
+void*
+operator new(size_t size, char,
+             char *file,
+             int line)
 {
-    void *p = malloc(size);
+    void *ptr = malloc(size);
     new_cnt++;
     total_alloc += size;
-    printf("%s %d\n", file, line);
+    mmdbg_node_append(&new_head, ptr, file, line);
 
-    return p;
+    return ptr;
 }
 
-void operator delete(void *p)
+void
+operator delete(void *buffer)
 {
     delete_cnt++;
-    printf("%s %d\n", __FILENAME__, __LINE__);
+    mmdbg_node_remove(&new_head, buffer);
 
-    free(p);
+    free(buffer);
+}
+
+void
+mmdbg_print_cpp(FILE *stream)
+{
+    fprintf(stream, "=========================================================\n");
+    fprintf(stream, "                    MMDBG OUTPUT\n");
+    fprintf(stream, "=========================================================\n");
+    fprintf(stream, "Total News:    %d\n", new_cnt);
+    fprintf(stream, "Total Deletes: %d\n", delete_cnt);
+    fprintf(stream, "Total Size:    %d bytes\n", total_alloc);
+    mmdbg_node_t *temp = new_head;
+
+    while (temp != NULL)
+    {
+        fprintf(stream, "\nWARNING: UNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
+                                                                         temp->file,
+                                                                         temp->line);
+        temp = temp->next;
+    }
+	fprintf(stream, "\n=========================================================\n");
+	fprintf(stream, "                    END OF OUTPUT\n");
+	fprintf(stream, "=========================================================\n");
 }
 
 #define NEW new(0, __FILENAME__, __LINE__)

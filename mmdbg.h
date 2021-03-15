@@ -88,7 +88,9 @@ mmdbg_print_c(FILE *stream)
 
     while (temp != NULL)
     {
-        fprintf(stream, "\nWARNING: UNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr, temp->file, temp->line);
+        fprintf(stream, "\nWARNING: UNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
+                                                                         temp->file,
+                                                                         temp->line);
         temp = temp->next;
     }
 	fprintf(stream, "\n=========================================================\n");
