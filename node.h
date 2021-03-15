@@ -6,10 +6,10 @@
 
 typedef struct _TAG_mmdbg_node
 {
-    void *ptr;
-    char *file;
-    int line;
-    struct _TAG_mmdbg_node *next;
+    void    *ptr;
+    char    *file;
+    int     line;
+    struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
 void
@@ -18,12 +18,15 @@ mmdbg_node_append(mmdbg_node_t **head,
                   char *file,
                   int line)
 {
-	// Allocate and fill new node
-    mmdbg_node_t *new_node = (mmdbg_node_t *)malloc(sizeof(mmdbg_node_t));
+    mmdbg_node_t    *new_node;
+    mmdbg_node_t    *temp;
+
+// Allocate and fill new node
+    new_node = (mmdbg_node_t *)malloc(sizeof(mmdbg_node_t));
     new_node->ptr = ptr;
     new_node->file = file;
     new_node->line = line;
-	new_node->next = NULL;
+new_node->next = NULL;
 
     // If list is empty
     if (*head == NULL)
@@ -33,7 +36,7 @@ mmdbg_node_append(mmdbg_node_t **head,
     else
     {
         // Find last node
-        mmdbg_node_t *temp = *head;
+        temp = *head;
         while (temp->next != NULL)
             temp = temp->next;
 
@@ -46,10 +49,11 @@ void
 mmdbg_node_remove(mmdbg_node_t **head,
                   void *ptr)
 {
-    mmdbg_node_t *temp = *head;
-    mmdbg_node_t *prev;
+    mmdbg_node_t    *temp;
+    mmdbg_node_t    *prev;
 
     // First node contains the ptr.
+    temp = *head;
     if (temp != NULL && temp->ptr == ptr)
     {
         *head = temp->next;

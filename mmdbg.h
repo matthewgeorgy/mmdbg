@@ -9,17 +9,21 @@
 // Macro to strip just the filename out of the full path (WINDOWS).
 #define __FILENAME__	(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 
-static int malloc_cnt;
-static int free_cnt;
-static size_t total_alloc;
-mmdbg_node_t *malloc_head = NULL;
+// Counters for malloc, free, total allocation,
+// and head node for the list
+static int      malloc_cnt;
+static int      free_cnt;
+static size_t   total_alloc;
+mmdbg_node_t    *malloc_head = NULL;
 
 void*
 mmdbg_malloc(size_t size,
              char *file,
              int line)
 {
-    void *ptr = malloc(size);
+    void    *ptr;
+    
+    ptr = malloc(size);
 
     // if allocation succeeded
     if (ptr)
@@ -70,7 +74,9 @@ mmdbg_free(void *buffer,
     printf("count:      %d\n", malloc_cnt - free_cnt);
     printf("-------------------------------------\n");
 #endif
+
     mmdbg_node_remove(&malloc_head, buffer);
+
     // free the buffer
     free(buffer);
 }
@@ -78,21 +84,25 @@ mmdbg_free(void *buffer,
 void
 mmdbg_print_c(FILE *stream)
 {
+    mmdbg_node_t    *temp;
+
     fprintf(stream, "=========================================================\n");
     fprintf(stream, "                    MMDBG OUTPUT\n");
     fprintf(stream, "=========================================================\n");
     fprintf(stream, "Total Mallocs: %d\n", malloc_cnt);
     fprintf(stream, "Total Frees:   %d\n", free_cnt);
     fprintf(stream, "Total Size:    %d bytes\n", total_alloc);
-    mmdbg_node_t *temp = malloc_head;
 
+    // Print info about memory leaks
+    temp = malloc_head;
     while (temp != NULL)
     {
-        fprintf(stream, "\nWARNING: UNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
-                                                                         temp->file,
-                                                                         temp->line);
+        fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
+																temp->file,
+																temp->line);
         temp = temp->next;
     }
+
 	fprintf(stream, "\n=========================================================\n");
 	fprintf(stream, "                    END OF OUTPUT\n");
 	fprintf(stream, "=========================================================\n");
