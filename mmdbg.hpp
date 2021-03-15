@@ -57,8 +57,8 @@ mmdbg_print_cpp(FILE *stream)
     while (temp != NULL)
     {
         fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
-                                                                temp->file,
-                                                                temp->line);
+																temp->file,
+																temp->line);
         temp = temp->next;
     }
 
