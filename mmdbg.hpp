@@ -57,15 +57,14 @@ mmdbg_print_cpp(FILE *stream)
     while (temp != NULL)
     {
         fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
-																temp->file,
-																temp->line);
+                                                                temp->file,
+                                                                temp->line);
         temp = temp->next;
-		void *foo = NULL;
     }
 
-	fprintf(stream, "\n=========================================================\n");
-	fprintf(stream, "                    END OF OUTPUT\n");
-	fprintf(stream, "=========================================================\n");
+    fprintf(stream, "\n=========================================================\n");
+    fprintf(stream, "                    END OF OUTPUT\n");
+    fprintf(stream, "=========================================================\n");
 }
 
 // wrap new and delete
