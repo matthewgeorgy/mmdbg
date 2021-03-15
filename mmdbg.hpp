@@ -24,10 +24,39 @@ operator new(size_t size,
     void    *ptr;
 
     ptr = malloc(size);
-    new_cnt++;
-    total_alloc += size;
-    mmdbg_node_append(&new_head, ptr, file, line);
 
+    // if allocation succeeded
+    if (ptr)
+    {
+        new_cnt++;
+        total_alloc += size;
+        // print allocation info
+#ifdef MMDBG_DUMP_PRINT
+        printf("-------------------------------------\n");
+        printf("NEW:        %u bytes\n", size);
+        printf("at address: %p\n", ptr);
+        printf("in file:    %s\n", file);
+        printf("on line:    %u\n", line);
+        printf("count:      %d\n", new_cnt - delete_cnt);
+        printf("-------------------------------------\n");
+#endif
+        mmdbg_node_append(&new_head, ptr, file, line);
+    }
+
+    // if allocation failed
+    else
+    {
+        // print allocation info
+#ifdef MMDBG_DUMP_PRINT
+        printf("-------------------------------------\n");
+        printf("NEW FAILED: %zu bytes\n", size);
+        printf("in file:    %s\n", file);
+        printf("on line:    %u\n", line);
+        printf("-------------------------------------\n");
+#endif
+    }
+
+    // return ptr regardless
     return ptr;
 }
 
@@ -35,8 +64,20 @@ void
 operator delete(void *buffer)
 {
     delete_cnt++;
+
+    // print freeing info
+#ifdef MMDBG_DUMP_PRINT
+    printf("-------------------------------------\n");
+    printf("DELETE:     %p\n", buffer);
+    printf("at file:    %s\n", file);
+    printf("on line:    %u\n", line);
+    printf("count:      %d\n", new_cnt - delete_cnt);
+    printf("-------------------------------------\n");
+#endif
+
     mmdbg_node_remove(&new_head, buffer);
 
+    // free the buffer
     free(buffer);
 }
 

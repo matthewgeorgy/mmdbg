@@ -28,9 +28,9 @@ mmdbg_malloc(size_t size,
     // if allocation succeeded
     if (ptr)
     {
-        // print allocation info
         malloc_cnt++;
         total_alloc += size;
+        // print allocation info
 #ifdef MMDBG_DUMP_PRINT
         printf("-------------------------------------\n");
         printf("MALLOC:     %u bytes\n", size);
@@ -48,9 +48,9 @@ mmdbg_malloc(size_t size,
         // print allocation info
 #ifdef MMDBG_DUMP_PRINT
         printf("-------------------------------------\n");
-        printf("FAILED: %zu bytes\n", size);
-        printf("in file: %s\n", file);
-        printf("on line: %u\n", line);
+        printf("MALLOC FAILED:  %zu bytes\n", size);
+        printf("in file:        %s\n", file);
+        printf("on line:        %u\n", line);
         printf("-------------------------------------\n");
 #endif 
     }
@@ -64,11 +64,11 @@ mmdbg_free(void *buffer,
            char *file,
            int line)
 {
-    // print freeing info
     free_cnt++;
+    // print freeing info
 #ifdef MMDBG_DUMP_PRINT
     printf("-------------------------------------\n");
-    printf("FREED:      %p\n", buffer);
+    printf("FREE:       %p\n", buffer);
     printf("at file:    %s\n", file);
     printf("on line:    %u\n", line);
     printf("count:      %d\n", malloc_cnt - free_cnt);
