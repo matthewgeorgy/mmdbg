@@ -98,14 +98,14 @@ mmdbg_print_c(FILE *stream)
     while (temp != NULL)
     {
         fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
-																temp->file,
-																temp->line);
+                                                                temp->file,
+                                                                temp->line);
         temp = temp->next;
     }
 
-	fprintf(stream, "\n=========================================================\n");
-	fprintf(stream, "                    END OF OUTPUT\n");
-	fprintf(stream, "=========================================================\n");
+    fprintf(stream, "\n=========================================================\n");
+    fprintf(stream, "                    END OF OUTPUT\n");
+    fprintf(stream, "=========================================================\n");
 }
 
 // wrap malloc() and free()
