@@ -60,6 +60,7 @@ mmdbg_print_cpp(FILE *stream)
 																temp->file,
 																temp->line);
         temp = temp->next;
+		void *foo = NULL;
     }
 
 	fprintf(stream, "\n=========================================================\n");
