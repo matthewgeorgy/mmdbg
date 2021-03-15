@@ -6,11 +6,8 @@
 #include <string.h>
 #include "node.h"
 
-// Macro to strip just the filename out of the full path.
+// Macro to strip just the filename out of the full path (WINDOWS).
 #define __FILENAME__	(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
-
-// C
-#ifdef MMDBG_C
 
 static int malloc_cnt;
 static int free_cnt;
@@ -81,9 +78,9 @@ mmdbg_free(void *buffer,
 void
 mmdbg_print_c(FILE *stream)
 {
-	fprintf(stream, "=========================================================\n");
-	fprintf(stream, "                    MMDBG OUTPUT\n");
-	fprintf(stream, "=========================================================\n");
+    fprintf(stream, "=========================================================\n");
+    fprintf(stream, "                    MMDBG OUTPUT\n");
+    fprintf(stream, "=========================================================\n");
     fprintf(stream, "Total Mallocs: %d\n", malloc_cnt);
     fprintf(stream, "Total Frees:   %d\n", free_cnt);
     fprintf(stream, "Total Size:    %d bytes\n", total_alloc);
@@ -100,9 +97,9 @@ mmdbg_print_c(FILE *stream)
 }
 
 // wrap malloc() and free()
+#ifdef MMDBG_DEBUG_C
 #define malloc(size)    mmdbg_malloc(size, __FILENAME__, __LINE__)
 #define free(buffer)    mmdbg_free(buffer, __FILENAME__, __LINE__)
-
-#endif // MMDBG_C
+#endif // MMDBG_DEBUG_C
 
 #endif // MMDBG_H
