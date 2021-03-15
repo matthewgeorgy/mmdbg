@@ -26,7 +26,7 @@ mmdbg_malloc(size_t size,
     {
         // print allocation info
         malloc_cnt++;
-		total_alloc += size;
+        total_alloc += size;
 #ifdef MMDBG_DUMP_PRINT
         printf("-------------------------------------\n");
         printf("MALLOC:     %u bytes\n", size);
