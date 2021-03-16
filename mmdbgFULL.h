@@ -203,6 +203,9 @@ mmdbg_node_remove(mmdbg_node_t **head,
 // C++
 ////////////////////
 
+// NOTE: overloaded delete doesn't support
+// DUMP_PRINT symbol because fuck you
+
 // Counters for new and delete
 static int      new_cnt;
 static int      delete_cnt;
@@ -252,25 +255,19 @@ operator new(size_t size,
 }
 
 void
-operator delete(void *buffer, char *file, int line)
+operator delete(void *buffer,
+				char *file,
+				int line)
 {
     delete_cnt++;
-
-    // print freeing info
-#ifdef MMDBG_DUMP_PRINT
-    printf("-------------------------------------\n");
-    printf("DELETE:     %p\n", buffer);
-    printf("at file:    %s\n", file);
-    printf("on line:    %u\n", line);
-    printf("count:      %d\n", new_cnt - delete_cnt);
-    printf("-------------------------------------\n");
-#endif
 
     mmdbg_node_remove(&alloc_head, buffer);
 
     // free the buffer
     free(buffer);
 }
+
+  #endif // __cplusplus
 
 // NOTE: option to specify stream for now,
 // will probably remove this later and make it just
@@ -306,8 +303,6 @@ mmdbg_print(FILE *stream)
     fprintf(stream, "=========================================================\n");
 }
 
-  #endif // __cplusplus
-
  #endif // MMDBG_IMPL
 
 // wrap malloc(), free(), new, and delete
@@ -318,6 +313,8 @@ mmdbg_print(FILE *stream)
  #ifdef __cplusplus
   #define MMDBG_NEW new(__FILENAME__, __LINE__)
   #define new MMDBG_NEW
+  #define MMDBG_DELETE delete(p, __FILENAME__, __LINE__)
+#define delete(p) MMDBG_DELETE
  #endif // __cplusplus
 
 #endif
