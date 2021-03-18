@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
+#include <string.h>
 
 // Macro to strip just the filename out of the full path.
 #define __FILENAME__	(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
@@ -52,10 +52,10 @@ void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
 
 // Counters for malloc, free, total allocation,
 // and head node for the list
-static int      malloc_cnt;
-static int      free_cnt;
-static size_t   total_alloc;
-mmdbg_node_t    *alloc_head = NULL;
+static int      mmdbg_malloc_cnt;
+static int      mmdbg_free_cnt;
+static size_t   mmdbg_total_alloc;
+mmdbg_node_t    *mmdbg_alloc_head = NULL;
 
 ////////////////////
 // C
@@ -73,8 +73,8 @@ mmdbg_malloc(size_t size,
     // if allocation succeeded
     if (ptr)
     {
-        malloc_cnt++;
-        total_alloc += size;
+        mmdbg_malloc_cnt++;
+        mmdbg_total_alloc += size;
         // print allocation info
 #ifdef MMDBG_DUMP_PRINT
         printf("-------------------------------------\n");
@@ -85,7 +85,7 @@ mmdbg_malloc(size_t size,
         printf("count:      %d\n", malloc_cnt - free_cnt);
         printf("-------------------------------------\n");
 #endif
-        mmdbg_node_append(&alloc_head, ptr, file, line);
+        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line);
     }
     // if allocation failed
     else
@@ -109,7 +109,7 @@ mmdbg_free(void *buffer,
            char *file,
            int line)
 {
-    free_cnt++;
+    mmdbg_free_cnt++;
     // print freeing info
 #ifdef MMDBG_DUMP_PRINT
     printf("-------------------------------------\n");
@@ -120,7 +120,7 @@ mmdbg_free(void *buffer,
     printf("-------------------------------------\n");
 #endif
 
-    mmdbg_node_remove(&alloc_head, buffer);
+    mmdbg_node_remove(&mmdbg_alloc_head, buffer);
 
     // free the buffer
     free(buffer);
@@ -207,8 +207,8 @@ mmdbg_node_remove(mmdbg_node_t **head,
 // DUMP_PRINT symbol because fuck you
 
 // Counters for new and delete
-static int      new_cnt;
-static int      delete_cnt;
+static int      mmdbg_new_cnt;
+static int      mmdbg_delete_cnt;
 
 void*
 operator new(size_t size,
@@ -222,8 +222,8 @@ operator new(size_t size,
     // if allocation succeeded
     if (ptr)
     {
-        new_cnt++;
-        total_alloc += size;
+        mmdbg_new_cnt++;
+        mmdbg_total_alloc += size;
         // print allocation info
 #ifdef MMDBG_DUMP_PRINT
         printf("-------------------------------------\n");
@@ -231,10 +231,10 @@ operator new(size_t size,
         printf("at address: %p\n", ptr);
         printf("in file:    %s\n", file);
         printf("on line:    %u\n", line);
-        printf("count:      %d\n", new_cnt - delete_cnt);
+        printf("count:      %d\n", mmdbg_new_cnt - mmdbg_delete_cnt);
         printf("-------------------------------------\n");
 #endif
-        mmdbg_node_append(&alloc_head, ptr, file, line);
+        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line);
     }
 
     // if allocation failed
@@ -259,9 +259,9 @@ operator delete(void *buffer,
 				char *file,
 				int line)
 {
-    delete_cnt++;
+    mmdbg_delete_cnt++;
 
-    mmdbg_node_remove(&alloc_head, buffer);
+    mmdbg_node_remove(&mmdbg_alloc_head, buffer);
 
     // free the buffer
     free(buffer);
@@ -280,16 +280,16 @@ mmdbg_print(FILE *stream)
     fprintf(stream, "=========================================================\n");
     fprintf(stream, "                    MMDBG OUTPUT\n");
     fprintf(stream, "=========================================================\n");
-    fprintf(stream, "Total Mallocs: %d\n", malloc_cnt);
-    fprintf(stream, "Total Frees:   %d\n", free_cnt);
+    fprintf(stream, "Total Mallocs: %d\n", mmdbg_malloc_cnt);
+    fprintf(stream, "Total Frees:   %d\n", mmdbg_free_cnt);
 #ifdef __cplusplus
-    fprintf(stream, "Total News:    %d\n", new_cnt);
-    fprintf(stream, "Total Deletes: %d\n", delete_cnt);
+    fprintf(stream, "Total News:    %d\n", mmdbg_new_cnt);
+    fprintf(stream, "Total Deletes: %d\n", mmdbg_delete_cnt);
 #endif
-    fprintf(stream, "Total Size:    %d bytes\n", total_alloc);
+    fprintf(stream, "Total Size:    %d bytes\n", mmdbg_total_alloc);
 
     // Print info about memory leaks
-    temp = alloc_head;
+    temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
         fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
