@@ -23,7 +23,7 @@ void    mmdbg_print(FILE *stream);
 ////////////////////
 
 void    *operator new(size_t size, char *file, int line);
-void    operator delete(void *buffer, char *file, int line);
+void    operator delete(void *buffer);
 
  #endif // __cplusplus
 
