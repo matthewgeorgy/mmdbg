@@ -203,8 +203,10 @@ mmdbg_node_remove(mmdbg_node_t **head,
 // C++
 ////////////////////
 
-// NOTE: overloaded delete doesn't support
-// DUMP_PRINT symbol because fuck you
+// NOTE: overloaded new and delete don't support
+// DUMP_PRINT symbol because fuck you.
+// If I'm able to figure out a way to wrap delete with
+// __FILE__ and __LINE__ then I'll add it in.
 
 // Counters for new and delete
 static int      mmdbg_new_cnt;
@@ -225,39 +227,37 @@ operator new(size_t size,
         mmdbg_new_cnt++;
         mmdbg_total_alloc += size;
         // print allocation info
-#ifdef MMDBG_DUMP_PRINT
-        printf("-------------------------------------\n");
-        printf("NEW:        %u bytes\n", size);
-        printf("at address: %p\n", ptr);
-        printf("in file:    %s\n", file);
-        printf("on line:    %u\n", line);
-        printf("count:      %d\n", mmdbg_new_cnt - mmdbg_delete_cnt);
-        printf("-------------------------------------\n");
-#endif
+/* #ifdef MMDBG_DUMP_PRINT */
+/*         printf("-------------------------------------\n"); */
+/*         printf("NEW:        %u bytes\n", size); */
+/*         printf("at address: %p\n", ptr); */
+/*         printf("in file:    %s\n", file); */
+/*         printf("on line:    %u\n", line); */
+/*         printf("count:      %d\n", mmdbg_new_cnt - mmdbg_delete_cnt); */
+/*         printf("-------------------------------------\n"); */
+/* #endif */
         mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line);
     }
 
-    // if allocation failed
-    else
-    {
-        // print allocation info
-#ifdef MMDBG_DUMP_PRINT
-        printf("-------------------------------------\n");
-        printf("NEW FAILED: %zu bytes\n", size);
-        printf("in file:    %s\n", file);
-        printf("on line:    %u\n", line);
-        printf("-------------------------------------\n");
-#endif
-    }
+    /* // if allocation failed */
+    /* else */
+    /* { */
+    /*     // print allocation info */
+/* #ifdef MMDBG_DUMP_PRINT */
+    /*     printf("-------------------------------------\n"); */
+    /*     printf("NEW FAILED: %zu bytes\n", size); */
+    /*     printf("in file:    %s\n", file); */
+    /*     printf("on line:    %u\n", line); */
+    /*     printf("-------------------------------------\n"); */
+/* #endif */
+    /* } */
 
     // return ptr regardless
     return ptr;
 }
 
 void
-operator delete(void *buffer,
-				char *file,
-				int line)
+operator delete(void *buffer)
 {
     mmdbg_delete_cnt++;
 
@@ -307,14 +307,15 @@ mmdbg_print(FILE *stream)
 
 // wrap malloc(), free(), new, and delete
 #ifdef MMDBG_DEBUG
+
 #define malloc(size)    mmdbg_malloc(size, __FILENAME__, __LINE__)
 #define free(buffer)    mmdbg_free(buffer, __FILENAME__, __LINE__)
 
  #ifdef __cplusplus
+
   #define MMDBG_NEW new(__FILENAME__, __LINE__)
   #define new MMDBG_NEW
-  #define MMDBG_DELETE delete(p, __FILENAME__, __LINE__)
-#define delete(p) MMDBG_DELETE
+
  #endif // __cplusplus
 
 #endif
