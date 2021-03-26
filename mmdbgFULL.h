@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef unsigned char		byte;
+typedef unsigned short		word;
+typedef unsigned int		dword;
+typedef unsigned long long	qword;
+
 // Macro to strip just the filename out of the full path.
 #define __FILENAME__	(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 
@@ -36,10 +41,11 @@ typedef struct _TAG_mmdbg_node
     void    *ptr;
     char    *file;
     int     line;
+    int     size;
     struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
-void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, char *file, int line);
+void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, char *file, int line, int size);
 void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
 
 
@@ -56,6 +62,7 @@ static int      mmdbg_malloc_cnt;
 static int      mmdbg_free_cnt;
 static size_t   mmdbg_total_alloc;
 mmdbg_node_t    *mmdbg_alloc_head = NULL;
+mmdbg_node_t    *mmdbg_alloc_record = NULL;
 
 ////////////////////
 // C
@@ -67,15 +74,19 @@ mmdbg_malloc(size_t size,
              int line)
 {
     void    *ptr;
+    dword   *buff_ov;
     
-    ptr = malloc(size);
+    ptr = malloc(size + sizeof(dword));
+    buff_ov = (dword *)((byte *)ptr + size);
+    *buff_ov = 0xFFFFEEEE;
 
     // if allocation succeeded
     if (ptr)
     {
         mmdbg_malloc_cnt++;
         mmdbg_total_alloc += size;
-        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line);
+        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line, size);
+        mmdbg_node_append(&mmdbg_alloc_record, ptr, file, line, size);
     }
     
     // return ptr regardless
@@ -104,7 +115,8 @@ void
 mmdbg_node_append(mmdbg_node_t **head,
                   void *ptr,
                   char *file,
-                  int line)
+                  int line,
+                  int size)
 {
     mmdbg_node_t    *new_node;
     mmdbg_node_t    *temp;
@@ -114,6 +126,7 @@ mmdbg_node_append(mmdbg_node_t **head,
     new_node->ptr = ptr;
     new_node->file = file;
     new_node->line = line;
+    new_node->size = size;
     new_node->next = NULL;
 
     // If list is empty
@@ -190,7 +203,7 @@ operator new(size_t size,
     {
         mmdbg_new_cnt++;
         mmdbg_total_alloc += size;
-        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line);
+        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line, size);
     }
 
     // return ptr regardless
@@ -236,6 +249,43 @@ mmdbg_print(FILE *stream)
         fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
                                                                 temp->file,
                                                                 temp->line);
+        temp = temp->next;
+    }
+
+    // TODO: This implementation works, but we can do a lot better. Instead of
+    // using two lists, we can add a few more flags to the mmdbg_node_t.
+    // 1) flag that tells whether the ptr has been freed
+    // 2) flag that tells if there was a buffer over/underrun
+    // When we call free, we look at each ends of the buffer to see if they're
+    // still intact, then set the over/underrun flags accordingly, as well as
+    // freeing the ptr and setting the 'free' flag.
+    // Then, when we get into this function, we simply check the fields of 
+    // each node and print the appropriate info. This works because all that
+    // needs to be communicated about an over/underrun is the address of the
+    // head/tail buffer (which we can get using pointer math); we need not
+    // communicate which exact byte(s) contain(s) overwritten data.
+    //
+    // NOTE: At some point, we'll need to make a design decision, because keeping a
+    // complete record of all the allocations is valuable info to have.
+    // However, it is unneccessary to keep this data in memory, so we'll just
+    // write it to a file instead. This will come much later though.
+
+    // Print info about buffer overruns
+    temp = mmdbg_alloc_record;
+    while (temp != NULL)
+    {
+        dword value;
+        void *p;
+
+        p = (char *)temp->ptr + temp->size;
+        value = *(dword *)p;
+        if (value != 0xFFFFEEEE)
+        {
+            fprintf(stream, "\nBUFFER OVERRUN:   0x%p : (%s (%d))", p,
+                                                                    temp->file,
+                                                                    temp->line);
+        }
+
         temp = temp->next;
     }
 
