@@ -17,12 +17,14 @@ typedef unsigned long long	qword;
 #define MMDBG_FREE_BIT  0x01
 #define MMDBG_OVER_BIT  0x02
 #define MMDBG_UNDER_BIT 0x04
+#define MMDBG_OVER_NUM  0xFFFFEEEE
+#define MMDBG_UNDER_NUM 0xBBBBAAAA
 
 ////////////////////
 // C
 ////////////////////
 
-void   *mmdbg_malloc(size_t size, char *file, int line);
+void    *mmdbg_malloc(size_t size, char *file, int line);
 void    mmdbg_free(void *buffer, char *file, int line);
 void    mmdbg_print(FILE *stream);
 
@@ -69,7 +71,6 @@ static int      mmdbg_malloc_cnt;
 static int      mmdbg_free_cnt;
 static size_t   mmdbg_total_alloc;
 mmdbg_node_t    *mmdbg_alloc_head = NULL;
-mmdbg_node_t    *mmdbg_alloc_record = NULL;
 
 ////////////////////
 // C
@@ -87,8 +88,8 @@ mmdbg_malloc(size_t size,
     buff_un = (dword *)malloc(size + 2 * sizeof(dword));
     ptr = buff_un + 1;
     buff_ov = (dword *)((byte *)ptr + size);
-    *buff_ov = 0xFFFFEEEE;
-    *buff_un = 0xBBBBAAAA;
+    *buff_ov = MMDBG_OVER_NUM;
+    *buff_un = MMDBG_UNDER_NUM;
 
     // if allocation succeeded
     if (ptr)
@@ -107,9 +108,9 @@ mmdbg_free(void *buffer,
            char *file,
            int line)
 {
-    mmdbg_node_t *temp;
-    dword value;
-    void *p;
+    mmdbg_node_t    *temp;
+    dword           value;
+    void            *p;
 
     // Set the 'freed' flag
     temp = mmdbg_alloc_head;
@@ -127,7 +128,7 @@ mmdbg_free(void *buffer,
     // Check for overrun
     p = (char *)buffer + temp->size;
     value = *(dword *)p;
-    if (value != 0xFFFFEEEE)
+    if (value != MMDBG_OVER_NUM)
     {
         temp->flags |= MMDBG_OVER_BIT;
     }
@@ -135,7 +136,7 @@ mmdbg_free(void *buffer,
     // Check for underrun
     p = (char *)buffer - 4;
     value = *(dword *)p;
-    if (value != 0xBBBBAAAA)
+    if (value != MMDBG_UNDER_NUM)
     {
         temp->flags |= MMDBG_UNDER_BIT;
     }
@@ -226,9 +227,9 @@ mmdbg_node_remove(mmdbg_node_t **head,
 void
 mmdbg_node_find_buffer_runs(mmdbg_node_t **head)
 {
-    mmdbg_node_t *temp;
-    dword value;
-    void *p;
+    mmdbg_node_t    *temp;
+    dword           value;
+    void            *p;
 
     temp = *head;
     while (temp != NULL)
@@ -238,7 +239,7 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t **head)
             // Find overruns
             p = (char *)temp->ptr + temp->size;
             value = *(dword *)p;
-            if (value != 0xFFFFEEEE)
+            if (value != MMDBG_OVER_NUM)
             {
                 temp->flags |= MMDBG_OVER_BIT;
             }
@@ -246,7 +247,7 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t **head)
             // Find underruns
             p = (char *)temp->ptr - 4;
             value = *(dword *)p;
-            if (value != 0xBBBBAAAA)
+            if (value != MMDBG_UNDER_NUM)
             {
                 temp->flags |= MMDBG_UNDER_BIT;
             }
@@ -300,9 +301,6 @@ operator delete(void *buffer)
 
   #endif // __cplusplus
 
-// NOTE: option to specify stream for now,
-// will probably remove this later and make it just
-// go straight to stdout instead.
 void
 mmdbg_print(FILE *stream)
 {
@@ -335,41 +333,23 @@ mmdbg_print(FILE *stream)
         temp = temp->next;
     }
 
-    // TODO: This implementation works, but we can do a lot better. Instead of
-    // using two lists, we can add a new flag to the mmdbg_node_t to keep track of
-    // some state info about our buffers.
-    // The new flag will contain (as of now) 2 bits:
-    //      1) Freed
-    //      2) Overrun
-    //      3) Underrun *(for later)
-    // Each time we call free, we first check the ends of the buffer to see if they're
-    // intact; if not, we set the appropriate bits. Then we free the buffer and set
-    // the 'freed' bit.
-    // Then, when we enter this function, we simply check each bit of the node and
-    // print the appropriate info.
-    //
-    // NOTE: At some point, we'll need to make a design decision, because keeping a
-    // complete record of all the allocations is valuable info to have.
-    // However, it is unneccessary to keep this data in memory, so we'll just
-    // write it to a file instead. This will come much later though.
-
     // Print info about buffer overruns
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
         void *p;
 
-        p = (char *)temp->ptr + temp->size;
         if (temp->flags & MMDBG_OVER_BIT)
         {
+            p = (char *)temp->ptr + temp->size;
             fprintf(stream, "\nBUFFER OVERRUN:   0x%p : (%s (%d))", p,
                                                                     temp->file,
                                                                     temp->line);
         }
 
-        p = (char *)temp->ptr - 4;
         if (temp->flags & MMDBG_UNDER_BIT)
         {
+            p = (char *)temp->ptr - 4;
             fprintf(stream, "\nBUFFER UNDERRUN:   0x%p : (%s (%d))",p,
                                                                     temp->file,
                                                                     temp->line);
