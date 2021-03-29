@@ -81,11 +81,14 @@ mmdbg_malloc(size_t size,
              int line)
 {
     void    *ptr;
+    dword   *buff_un;
     dword   *buff_ov;
     
-    ptr = malloc(size + sizeof(dword));
+    buff_un = (dword *)malloc(size + 2 * sizeof(dword));
+    ptr = buff_un + 1;
     buff_ov = (dword *)((byte *)ptr + size);
     *buff_ov = 0xFFFFEEEE;
+    *buff_un = 0xBBBBAAAA;
 
     // if allocation succeeded
     if (ptr)
@@ -129,10 +132,18 @@ mmdbg_free(void *buffer,
         temp->flags |= MMDBG_OVER_BIT;
     }
 
+    // Check for underrun
+    p = (char *)buffer - 4;
+    value = *(dword *)p;
+    if (value != 0xBBBBAAAA)
+    {
+        temp->flags |= MMDBG_UNDER_BIT;
+    }
+
     mmdbg_free_cnt++;
 
     // free the buffer
-    free(buffer);
+    free((dword *)buffer - 1);
 }
 
 
@@ -219,17 +230,25 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t **head)
     dword value;
     void *p;
 
-    // Find overruns
     temp = *head;
     while (temp != NULL)
     {
         if (!(temp->flags && MMDBG_FREE_BIT))
         {
+            // Find overruns
             p = (char *)temp->ptr + temp->size;
             value = *(dword *)p;
             if (value != 0xFFFFEEEE)
             {
                 temp->flags |= MMDBG_OVER_BIT;
+            }
+
+            // Find underruns
+            p = (char *)temp->ptr - 4;
+            value = *(dword *)p;
+            if (value != 0xBBBBAAAA)
+            {
+                temp->flags |= MMDBG_UNDER_BIT;
             }
         }
 
@@ -276,7 +295,7 @@ operator delete(void *buffer)
     mmdbg_node_remove(&mmdbg_alloc_head, buffer);
 
     // free the buffer
-    free(buffer);
+    free((dword *)buffer - 1);
 }
 
   #endif // __cplusplus
@@ -288,6 +307,8 @@ void
 mmdbg_print(FILE *stream)
 {
     mmdbg_node_t    *temp;
+
+    mmdbg_node_find_buffer_runs(&mmdbg_alloc_head);
 
     fprintf(stream, "=========================================================\n");
     fprintf(stream, "                    MMDBG OUTPUT\n");
@@ -333,15 +354,23 @@ mmdbg_print(FILE *stream)
     // write it to a file instead. This will come much later though.
 
     // Print info about buffer overruns
-    mmdbg_node_find_buffer_runs(&mmdbg_alloc_head);
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
-        void *p = (char *)temp->ptr + temp->size;
+        void *p;
 
+        p = (char *)temp->ptr + temp->size;
         if (temp->flags & MMDBG_OVER_BIT)
         {
             fprintf(stream, "\nBUFFER OVERRUN:   0x%p : (%s (%d))", p,
+                                                                    temp->file,
+                                                                    temp->line);
+        }
+
+        p = (char *)temp->ptr - 4;
+        if (temp->flags & MMDBG_UNDER_BIT)
+        {
+            fprintf(stream, "\nBUFFER UNDERRUN:   0x%p : (%s (%d))",p,
                                                                     temp->file,
                                                                     temp->line);
         }
