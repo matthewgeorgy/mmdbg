@@ -42,6 +42,7 @@ typedef struct _TAG_mmdbg_node
     char    *file;
     int     line;
     int     size;
+    int     freed;
     struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
@@ -147,6 +148,9 @@ mmdbg_node_append(mmdbg_node_t **head,
     }
 }
 
+// Given the rearchitecting that we're currently doing, ergo we aren't deleting
+// the list anymore, this function can probably be removed at some point. For now,
+// though, we'll keep it; however, we probably won't be calling it anymore.
 void
 mmdbg_node_remove(mmdbg_node_t **head,
                   void *ptr)
@@ -253,17 +257,16 @@ mmdbg_print(FILE *stream)
     }
 
     // TODO: This implementation works, but we can do a lot better. Instead of
-    // using two lists, we can add a few more flags to the mmdbg_node_t.
-    // 1) flag that tells whether the ptr has been freed
-    // 2) flag that tells if there was a buffer over/underrun
-    // When we call free, we look at each ends of the buffer to see if they're
-    // still intact, then set the over/underrun flags accordingly, as well as
-    // freeing the ptr and setting the 'free' flag.
-    // Then, when we get into this function, we simply check the fields of 
-    // each node and print the appropriate info. This works because all that
-    // needs to be communicated about an over/underrun is the address of the
-    // head/tail buffer (which we can get using pointer math); we need not
-    // communicate which exact byte(s) contain(s) overwritten data.
+    // using two lists, we can add a new flag to the mmdbg_node_t.
+    // 1) flag that tells whether the ptr has been freed.
+    // When we call free, we just free the buffer and set the 'free' flag so that we
+    // know that the memory has been freed.
+    // Then when we enter this function, we check each end of the buffer to see if
+    // they are intact, and then report any buffer over/under runs accordingly. For
+    // simplicity, we'll first check underruns, then overruns; this simplifies the
+    // buffer integrity verification process (check ALL underruns, then ALL overruns)
+    // and it makes the reporting in our output more neat (ALL underruns, followed
+    // by ALL overruns).
     //
     // NOTE: At some point, we'll need to make a design decision, because keeping a
     // complete record of all the allocations is valuable info to have.
