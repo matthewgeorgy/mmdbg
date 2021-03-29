@@ -12,6 +12,11 @@ typedef unsigned long long	qword;
 
 // Macro to strip just the filename out of the full path.
 #define __FILENAME__	(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#define MMDBG_TRUE      1
+#define MMDBG_FALSE     0
+#define MMDBG_FREE_BIT  0x01
+#define MMDBG_OVER_BIT  0x02
+#define MMDBG_UNDER_BIT 0x04
 
 ////////////////////
 // C
@@ -42,12 +47,13 @@ typedef struct _TAG_mmdbg_node
     char    *file;
     int     line;
     int     size;
-    int     freed;
+    byte    flags;
     struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
 void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, char *file, int line, int size);
 void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
+void    mmdbg_node_find_buffer_runs(mmdbg_node_t **head);
 
 
 
@@ -87,7 +93,6 @@ mmdbg_malloc(size_t size,
         mmdbg_malloc_cnt++;
         mmdbg_total_alloc += size;
         mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line, size);
-        mmdbg_node_append(&mmdbg_alloc_record, ptr, file, line, size);
     }
     
     // return ptr regardless
@@ -99,9 +104,32 @@ mmdbg_free(void *buffer,
            char *file,
            int line)
 {
-    mmdbg_free_cnt++;
+    mmdbg_node_t *temp;
+    dword value;
+    void *p;
 
-    mmdbg_node_remove(&mmdbg_alloc_head, buffer);
+    // Set the 'freed' flag
+    temp = mmdbg_alloc_head;
+    while (temp != NULL)
+    {
+        if (temp->ptr == buffer)
+        {
+            temp->flags |= MMDBG_FREE_BIT;
+            break;
+        }
+
+        temp = temp->next;
+    }
+
+    // Check for overrun
+    p = (char *)buffer + temp->size;
+    value = *(dword *)p;
+    if (value != 0xFFFFEEEE)
+    {
+        temp->flags |= MMDBG_OVER_BIT;
+    }
+
+    mmdbg_free_cnt++;
 
     // free the buffer
     free(buffer);
@@ -128,6 +156,7 @@ mmdbg_node_append(mmdbg_node_t **head,
     new_node->file = file;
     new_node->line = line;
     new_node->size = size;
+    new_node->flags = 0x0;
     new_node->next = NULL;
 
     // If list is empty
@@ -180,6 +209,31 @@ mmdbg_node_remove(mmdbg_node_t **head,
         // Reconnect list and remove the node.
         prev->next = temp->next;
         free(temp);
+    }
+}
+
+void
+mmdbg_node_find_buffer_runs(mmdbg_node_t **head)
+{
+    mmdbg_node_t *temp;
+    dword value;
+    void *p;
+
+    // Find overruns
+    temp = *head;
+    while (temp != NULL)
+    {
+        if (!(temp->flags && MMDBG_FREE_BIT))
+        {
+            p = (char *)temp->ptr + temp->size;
+            value = *(dword *)p;
+            if (value != 0xFFFFEEEE)
+            {
+                temp->flags |= MMDBG_OVER_BIT;
+            }
+        }
+
+        temp = temp->next;
     }
 }
 
@@ -250,23 +304,28 @@ mmdbg_print(FILE *stream)
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
-        fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
-                                                                temp->file,
-                                                                temp->line);
+        if (!(temp->flags & MMDBG_FREE_BIT))
+        {
+            fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
+                                                                    temp->file,
+                                                                    temp->line);
+        }
+
         temp = temp->next;
     }
 
     // TODO: This implementation works, but we can do a lot better. Instead of
-    // using two lists, we can add a new flag to the mmdbg_node_t.
-    // 1) flag that tells whether the ptr has been freed.
-    // When we call free, we just free the buffer and set the 'free' flag so that we
-    // know that the memory has been freed.
-    // Then when we enter this function, we check each end of the buffer to see if
-    // they are intact, and then report any buffer over/under runs accordingly. For
-    // simplicity, we'll first check underruns, then overruns; this simplifies the
-    // buffer integrity verification process (check ALL underruns, then ALL overruns)
-    // and it makes the reporting in our output more neat (ALL underruns, followed
-    // by ALL overruns).
+    // using two lists, we can add a new flag to the mmdbg_node_t to keep track of
+    // some state info about our buffers.
+    // The new flag will contain (as of now) 2 bits:
+    //      1) Freed
+    //      2) Overrun
+    //      3) Underrun *(for later)
+    // Each time we call free, we first check the ends of the buffer to see if they're
+    // intact; if not, we set the appropriate bits. Then we free the buffer and set
+    // the 'freed' bit.
+    // Then, when we enter this function, we simply check each bit of the node and
+    // print the appropriate info.
     //
     // NOTE: At some point, we'll need to make a design decision, because keeping a
     // complete record of all the allocations is valuable info to have.
@@ -274,15 +333,13 @@ mmdbg_print(FILE *stream)
     // write it to a file instead. This will come much later though.
 
     // Print info about buffer overruns
-    temp = mmdbg_alloc_record;
+    mmdbg_node_find_buffer_runs(&mmdbg_alloc_head);
+    temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
-        dword value;
-        void *p;
+        void *p = (char *)temp->ptr + temp->size;
 
-        p = (char *)temp->ptr + temp->size;
-        value = *(dword *)p;
-        if (value != 0xFFFFEEEE)
+        if (temp->flags & MMDBG_OVER_BIT)
         {
             fprintf(stream, "\nBUFFER OVERRUN:   0x%p : (%s (%d))", p,
                                                                     temp->file,
