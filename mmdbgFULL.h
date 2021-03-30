@@ -273,8 +273,14 @@ operator new(size_t size,
              int line)
 {
     void    *ptr;
-
-    ptr = malloc(size);
+    dword   *buff_un;
+    dword   *buff_ov;
+    
+    buff_un = (dword *)malloc(size + 2 * sizeof(dword));
+    ptr = buff_un + 1;
+    buff_ov = (dword *)((byte *)ptr + size);
+    *buff_ov = MMDBG_OVER_NUM;
+    *buff_un = MMDBG_UNDER_NUM;
 
     // if allocation succeeded
     if (ptr)
@@ -291,9 +297,39 @@ operator new(size_t size,
 void
 operator delete(void *buffer)
 {
-    mmdbg_delete_cnt++;
+    mmdbg_node_t    *temp;
+    dword           value;
+    void            *p;
 
-    mmdbg_node_remove(&mmdbg_alloc_head, buffer);
+    temp = mmdbg_alloc_head;
+    while (temp != NULL)
+    {
+        if (temp->ptr == buffer)
+        {
+            temp->flags |= MMDBG_FREE_BIT;
+            break;
+        }
+
+        temp = temp->next;
+    }
+
+    // Check for overrun
+    p = (char *)buffer + temp->size;
+    value = *(dword *)p;
+    if (value != MMDBG_OVER_NUM)
+    {
+        temp->flags |= MMDBG_OVER_BIT;
+    }
+
+    // Check for underrun
+    p = (char *)buffer - 4;
+    value = *(dword *)p;
+    if (value != MMDBG_UNDER_NUM)
+    {
+        temp->flags |= MMDBG_UNDER_BIT;
+    }
+
+    mmdbg_delete_cnt++;
 
     // free the buffer
     free((dword *)buffer - 1);
@@ -325,7 +361,7 @@ mmdbg_print(FILE *stream)
     {
         if (!(temp->flags & MMDBG_FREE_BIT))
         {
-            fprintf(stream, "\nUNFREED MEMORY:   0x%p : (%s (%d))", temp->ptr,
+            fprintf(stream, "\nUNFREED MEMORY:   0x%p (%s (%d))", temp->ptr,
                                                                     temp->file,
                                                                     temp->line);
         }
@@ -342,17 +378,17 @@ mmdbg_print(FILE *stream)
         if (temp->flags & MMDBG_OVER_BIT)
         {
             p = (char *)temp->ptr + temp->size;
-            fprintf(stream, "\nBUFFER OVERRUN:   0x%p : (%s (%d))", p,
-                                                                    temp->file,
-                                                                    temp->line);
+            fprintf(stream, "\nBUFFER OVERRUN:   0x%p (%s (%d))", p,
+                                                                  temp->file,
+                                                                  temp->line);
         }
 
         if (temp->flags & MMDBG_UNDER_BIT)
         {
             p = (char *)temp->ptr - 4;
-            fprintf(stream, "\nBUFFER UNDERRUN:   0x%p : (%s (%d))",p,
-                                                                    temp->file,
-                                                                    temp->line);
+            fprintf(stream, "\nBUFFER UNDERRUN:  0x%p (%s (%d))",p,
+                                                                 temp->file,
+                                                                 temp->line);
         }
 
         temp = temp->next;
