@@ -5,20 +5,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef unsigned char		byte;
-typedef unsigned short		word;
-typedef unsigned int		dword;
-typedef unsigned long long	qword;
+typedef unsigned char       byte;
+typedef unsigned short      word;
+typedef unsigned int        dword;
+typedef unsigned long long  qword;
 
 // Macro to strip just the filename out of the full path.
-#define __FILENAME__	(strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
-#define MMDBG_TRUE      1
-#define MMDBG_FALSE     0
-#define MMDBG_FREE_BIT  0x01
-#define MMDBG_OVER_BIT  0x02
-#define MMDBG_UNDER_BIT 0x04
-#define MMDBG_OVER_NUM  0xFFFFEEEE
-#define MMDBG_UNDER_NUM 0xBBBBAAAA
+#define __FILENAME__    (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#define MMDBG_TRUE              1
+#define MMDBG_FALSE             0
+#define MMDBG_FREE_BIT          0x01
+#define MMDBG_OVER_BIT          0x02
+#define MMDBG_UNDER_BIT         0x04
+#define MMDBG_DOUBLE_FREE_BIT   0x08 
+#define MMDBG_OVER_NUM          0xFFFFEEEE
+#define MMDBG_UNDER_NUM         0xBBBBAAAA
 
 ////////////////////
 // C
@@ -47,7 +48,9 @@ typedef struct _TAG_mmdbg_node
 {
     void    *ptr;
     char    *file;
+    char    *df_file;
     int     line;
+    int     df_line;
     int     size;
     byte    flags;
     struct  _TAG_mmdbg_node *next;
@@ -112,39 +115,52 @@ mmdbg_free(void *buffer,
     dword           value;
     void            *p;
 
-    // Set the 'freed' flag
+    // Set the 'freed' (or 'double freed') flag
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
         if (temp->ptr == buffer)
         {
-            temp->flags |= MMDBG_FREE_BIT;
+            if (!(temp->flags & MMDBG_FREE_BIT))
+            {
+                temp->flags |= MMDBG_FREE_BIT;
+            }
+            else if (temp->flags & MMDBG_FREE_BIT)
+            {
+                temp->flags |= MMDBG_DOUBLE_FREE_BIT;
+                temp->df_file = file;
+                temp->df_line = line;
+            }
+
             break;
         }
 
         temp = temp->next;
     }
 
-    // Check for overrun
-    p = (char *)buffer + temp->size;
-    value = *(dword *)p;
-    if (value != MMDBG_OVER_NUM)
+    if (!(temp->flags & MMDBG_DOUBLE_FREE_BIT))
     {
-        temp->flags |= MMDBG_OVER_BIT;
+        // Check for overrun
+        p = (char *)buffer + temp->size;
+        value = *(dword *)p;
+        if (value != MMDBG_OVER_NUM)
+        {
+            temp->flags |= MMDBG_OVER_BIT;
+        }
+
+        // Check for underrun
+        p = (char *)buffer - 4;
+        value = *(dword *)p;
+        if (value != MMDBG_UNDER_NUM)
+        {
+            temp->flags |= MMDBG_UNDER_BIT;
+        }
+
+        mmdbg_free_cnt++;
+
+        // free the buffer
+        free((dword *)buffer - 1);
     }
-
-    // Check for underrun
-    p = (char *)buffer - 4;
-    value = *(dword *)p;
-    if (value != MMDBG_UNDER_NUM)
-    {
-        temp->flags |= MMDBG_UNDER_BIT;
-    }
-
-    mmdbg_free_cnt++;
-
-    // free the buffer
-    free((dword *)buffer - 1);
 }
 
 
@@ -167,6 +183,8 @@ mmdbg_node_append(mmdbg_node_t **head,
     new_node->ptr = ptr;
     new_node->file = file;
     new_node->line = line;
+    new_node->df_file = NULL;
+    new_node->df_line = 0;
     new_node->size = size;
     new_node->flags = 0x0;
     new_node->next = NULL;
@@ -224,6 +242,9 @@ mmdbg_node_remove(mmdbg_node_t **head,
     }
 }
 
+// TODO: might change this so that it just takes a single mmdbg_node_t
+// and determines if there was a buffer run of some sort; then we just
+// spam this function in a while loop and iterate over the whole list.
 void
 mmdbg_node_find_buffer_runs(mmdbg_node_t **head)
 {
@@ -355,15 +376,21 @@ mmdbg_print(FILE *stream)
 #endif
     fprintf(stream, "Total Size:    %d bytes\n", mmdbg_total_alloc);
 
-    // Print info about memory leaks
+    // Print info about memory leaks and double frees
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
         if (!(temp->flags & MMDBG_FREE_BIT))
         {
             fprintf(stream, "\nUNFREED MEMORY:   0x%p (%s (%d))", temp->ptr,
-                                                                    temp->file,
-                                                                    temp->line);
+                                                                  temp->file,
+                                                                  temp->line);
+        }
+        if (temp->flags & MMDBG_DOUBLE_FREE_BIT)
+        {
+            fprintf(stream, "\nDOUBLE FREE:      0x%p (%s (%d))", temp->ptr,
+                                                                  temp->df_file,
+                                                                  temp->df_line);
         }
 
         temp = temp->next;
