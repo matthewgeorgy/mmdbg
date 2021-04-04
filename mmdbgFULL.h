@@ -58,7 +58,7 @@ typedef struct _TAG_mmdbg_node
 
 void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, char *file, int line, int size);
 void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
-void    mmdbg_node_find_buffer_runs(mmdbg_node_t **head);
+void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 
 
 
@@ -243,17 +243,14 @@ mmdbg_node_remove(mmdbg_node_t **head,
     }
 }
 
-// TODO: might change this so that it just takes a single mmdbg_node_t
-// and determines if there was a buffer run of some sort; then we just
-// spam this function in a while loop and iterate over the whole list.
 void
-mmdbg_node_find_buffer_runs(mmdbg_node_t **head)
+mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
 {
     mmdbg_node_t    *temp;
     dword           value;
     void            *p;
 
-    temp = *head;
+    temp = head;
     while (temp != NULL)
     {
         if (!(temp->flags && MMDBG_FREE_BIT))
@@ -365,7 +362,7 @@ mmdbg_print(FILE *stream)
 {
     mmdbg_node_t    *temp;
 
-    mmdbg_node_find_buffer_runs(&mmdbg_alloc_head);
+    mmdbg_node_find_buffer_runs(mmdbg_alloc_head);
 
     fprintf(stream, "=========================================================\n");
     fprintf(stream, "                    MMDBG OUTPUT\n");
