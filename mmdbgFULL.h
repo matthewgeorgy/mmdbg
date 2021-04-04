@@ -380,7 +380,7 @@ mmdbg_print(FILE *stream)
 
     mmdbg_node_find_buffer_runs(mmdbg_alloc_head);
 
-    fprintf(stream, "=========================================================\n");
+    fprintf(stream, "\n=========================================================\n");
     fprintf(stream, "                    MMDBG OUTPUT\n");
     fprintf(stream, "=========================================================\n");
     fprintf(stream, "Total Mallocs: %d\n", mmdbg_malloc_cnt);
