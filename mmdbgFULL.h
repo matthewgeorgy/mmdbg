@@ -89,14 +89,15 @@ mmdbg_malloc(size_t size,
     dword   *buff_ov;
     
     buff_un = (dword *)malloc(size + 2 * sizeof(dword));
-    ptr = buff_un + 1;
-    buff_ov = (dword *)((byte *)ptr + size);
-    *buff_ov = MMDBG_OVER_NUM;
-    *buff_un = MMDBG_UNDER_NUM;
 
     // if allocation succeeded
-    if (ptr)
+    if (buff_un)
     {
+        ptr = buff_un + 1;
+        buff_ov = (dword *)((byte *)ptr + size);
+        *buff_ov = MMDBG_OVER_NUM;
+        *buff_un = MMDBG_UNDER_NUM;
+
         mmdbg_malloc_cnt++;
         mmdbg_total_alloc += size;
         mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line, size);
@@ -298,14 +299,15 @@ operator new(size_t size,
     dword   *buff_ov;
     
     buff_un = (dword *)malloc(size + 2 * sizeof(dword));
-    ptr = buff_un + 1;
-    buff_ov = (dword *)((byte *)ptr + size);
-    *buff_ov = MMDBG_OVER_NUM;
-    *buff_un = MMDBG_UNDER_NUM;
 
     // if allocation succeeded
-    if (ptr)
+    if (buff_un)
     {
+        ptr = buff_un + 1;
+        buff_ov = (dword *)((byte *)ptr + size);
+        *buff_ov = MMDBG_OVER_NUM;
+        *buff_un = MMDBG_UNDER_NUM;
+
         mmdbg_new_cnt++;
         mmdbg_total_alloc += size;
         mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line, size);
