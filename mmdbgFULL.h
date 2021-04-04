@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Perfectly legal typedefs that shouldn't collide since they are correct.
+// If this produces an issue... not my problem!
+// Learn how the types in the computer are named :P
 typedef unsigned char       byte;
 typedef unsigned short      word;
 typedef unsigned int        dword;
@@ -12,6 +15,8 @@ typedef unsigned long long  qword;
 
 // Macro to strip just the filename out of the full path.
 #define __FILENAME__    (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+
+// Useful #define constants we use
 #define MMDBG_TRUE              1
 #define MMDBG_FALSE             0
 #define MMDBG_FREE_BIT          0x01
@@ -66,6 +71,15 @@ void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 // MMDBG IMPLEMENTATION
 //////////////////////////////////////////////////
 
+// #define this symbol in exactly 1 AND ONLY 1 .c/.cpp file
+// before including the utility!
+// For example:
+//          #include <...>
+//          #include <...>
+//          #include <...>
+//
+//          #define MMDBG_IMPL
+//          #include <mmdbg.h>
  #ifdef MMDBG_IMPL
 
 // Counters for malloc, free, total allocation,
@@ -116,7 +130,7 @@ mmdbg_free(void *buffer,
     dword           value;
     void            *p;
 
-    // Set the 'freed' (or 'double freed') flag
+    // Set the 'freed' (or 'double freed') flag(s)
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
@@ -208,8 +222,8 @@ mmdbg_node_append(mmdbg_node_t **head,
     }
 }
 
-// Given the rearchitecting that we're currently doing, ergo we aren't deleting
-// the list anymore, this function can probably be removed at some point. For now,
+// Given the rearchitecting that we're currently doing, (ergo we aren't deleting
+// the list anymore), this function can probably be removed at some point. For now,
 // though, we'll keep it; however, we probably won't be calling it anymore.
 void
 mmdbg_node_remove(mmdbg_node_t **head,
@@ -243,6 +257,8 @@ mmdbg_node_remove(mmdbg_node_t **head,
     }
 }
 
+// Go through the list and find any buffer overruns/underruns,
+// and then update each ptr's node accordingly
 void
 mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
 {
