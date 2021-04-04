@@ -389,54 +389,52 @@ mmdbg_print(FILE *stream)
     fprintf(stream, "Total News:    %d\n", mmdbg_new_cnt);
     fprintf(stream, "Total Deletes: %d\n", mmdbg_delete_cnt);
 #endif
-    fprintf(stream, "Total Size:    %d bytes\n", mmdbg_total_alloc);
+    fprintf(stream, "Total Size:    %d bytes\n\n", mmdbg_total_alloc);
 
-    // Print info about memory leaks and double frees
-    temp = mmdbg_alloc_head;
-    while (temp != NULL)
-    {
-        if (!(temp->flags & MMDBG_FREE_BIT))
-        {
-            fprintf(stream, "\nUNFREED MEMORY:   0x%p (%s (%d))", temp->ptr,
-                                                                  temp->file,
-                                                                  temp->line);
-        }
-        if (temp->flags & MMDBG_DOUBLE_FREE_BIT)
-        {
-            fprintf(stream, "\nDOUBLE FREE:      0x%p (%s (%d))", temp->ptr,
-                                                                  temp->df_file,
-                                                                  temp->df_line);
-        }
-
-        temp = temp->next;
-    }
-
-    // Print info about buffer overruns
+    // Print out all debug-related info
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
         void *p;
 
-        if (temp->flags & MMDBG_OVER_BIT)
+        // Memory Leaks
+        if (!(temp->flags & MMDBG_FREE_BIT))
         {
-            p = (char *)temp->ptr + temp->size;
-            fprintf(stream, "\nBUFFER OVERRUN:   0x%p (%s (%d))", p,
+            fprintf(stream, "UNFREED MEMORY:   0x%p (%s (%d))\n", temp->ptr,
                                                                   temp->file,
                                                                   temp->line);
         }
 
+        // Double Frees
+        if (temp->flags & MMDBG_DOUBLE_FREE_BIT)
+        {
+            fprintf(stream, "DOUBLE FREE:      0x%p (%s (%d))\n", temp->ptr,
+                                                                  temp->df_file,
+                                                                  temp->df_line);
+        }
+
+        // Buffer Underruns
         if (temp->flags & MMDBG_UNDER_BIT)
         {
             p = (char *)temp->ptr - 4;
-            fprintf(stream, "\nBUFFER UNDERRUN:  0x%p (%s (%d))",p,
-                                                                 temp->file,
-                                                                 temp->line);
+            fprintf(stream, "BUFFER UNDERRUN:  0x%p (%s (%d))\n", p,
+                                                                  temp->file,
+                                                                  temp->line);
+        }
+
+        // Buffer Overruns
+        if (temp->flags & MMDBG_OVER_BIT)
+        {
+            p = (char *)temp->ptr + temp->size;
+            fprintf(stream, "BUFFER OVERRUN:   0x%p (%s (%d))\n", p,
+                                                                  temp->file,
+                                                                  temp->line);
         }
 
         temp = temp->next;
     }
 
-    fprintf(stream, "\n=========================================================\n");
+    fprintf(stream, "=========================================================\n");
     fprintf(stream, "                    END OF OUTPUT\n");
     fprintf(stream, "=========================================================\n");
 }
