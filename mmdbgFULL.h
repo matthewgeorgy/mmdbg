@@ -30,8 +30,8 @@ typedef unsigned long long  qword;
 // C
 ////////////////////
 
-void    *mmdbg_malloc(size_t size, char *file, int line);
-void    mmdbg_free(void *buffer, char *file, int line);
+void    *mmdbg_malloc(size_t size, const char *file, int line);
+void    mmdbg_free(void *buffer, const char *file, int line);
 void    mmdbg_print(FILE *stream);
 
  #ifdef __cplusplus
@@ -40,7 +40,7 @@ void    mmdbg_print(FILE *stream);
 // C++
 ////////////////////
 
-void    *operator new(size_t size, char *file, int line);
+void    *operator new(size_t size, const char *file, int line);
 void    operator delete(void *buffer);
 
  #endif // __cplusplus
@@ -61,7 +61,7 @@ typedef struct _TAG_mmdbg_node
     struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
-void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, char *file, int line, int size);
+void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, const char *file, int line, int size);
 void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
 void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 
@@ -95,7 +95,7 @@ mmdbg_node_t    *mmdbg_alloc_head = NULL;
 
 void*
 mmdbg_malloc(size_t size,
-             char *file,
+             const char *file,
              int line)
 {
     void    *ptr;
@@ -123,7 +123,7 @@ mmdbg_malloc(size_t size,
 
 void
 mmdbg_free(void *buffer,
-           char *file,
+           const char *file,
            int line)
 {
     mmdbg_node_t    *temp;
@@ -143,7 +143,7 @@ mmdbg_free(void *buffer,
             else if (temp->flags & MMDBG_FREE_BIT)
             {
                 temp->flags |= MMDBG_DOUBLE_FREE_BIT;
-                temp->df_file = file;
+                temp->df_file = (char *)file;
                 temp->df_line = line;
             }
 
@@ -186,7 +186,7 @@ mmdbg_free(void *buffer,
 void
 mmdbg_node_append(mmdbg_node_t **head,
                   void *ptr,
-                  char *file,
+                  const char *file,
                   int line,
                   int size)
 {
@@ -196,7 +196,7 @@ mmdbg_node_append(mmdbg_node_t **head,
     // Allocate and fill new node
     new_node = (mmdbg_node_t *)malloc(sizeof(mmdbg_node_t));
     new_node->ptr = ptr;
-    new_node->file = file;
+    new_node->file = (char *)file;
     new_node->line = line;
     new_node->df_file = NULL;
     new_node->df_line = 0;
@@ -304,7 +304,7 @@ static int      mmdbg_delete_cnt;
 
 void*
 operator new(size_t size,
-             char *file,
+             const char *file,
              int line)
 {
     void    *ptr;
