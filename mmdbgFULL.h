@@ -219,41 +219,6 @@ mmdbg_node_append(mmdbg_node_t **head,
     }
 }
 
-// Given the rearchitecting that we're currently doing, (ergo we aren't deleting
-// the list anymore), this function can probably be removed at some point. For now,
-// though, we'll keep it; however, we probably won't be calling it anymore.
-void
-mmdbg_node_remove(mmdbg_node_t **head,
-                  void *ptr)
-{
-    mmdbg_node_t    *temp,
-                    *prev;
-
-    // First node contains the ptr.
-    temp = *head;
-    if (temp != NULL && temp->ptr == ptr)
-    {
-        *head = temp->next;
-        free(temp);
-        return;
-    }
-
-    // Otherwise, traverse list to find the node.
-    else
-    {
-        // Search the list.
-        while (temp != NULL && temp->ptr != ptr)
-        {
-            prev = temp;
-            temp = temp->next;
-        }
-
-        // Reconnect list and remove the node.
-        prev->next = temp->next;
-        free(temp);
-    }
-}
-
 // Go through the list and find any buffer overruns/underruns,
 // and then update each ptr's node accordingly
 void
