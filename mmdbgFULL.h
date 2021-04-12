@@ -6,12 +6,9 @@
 #include <string.h>
 
 // Perfectly legal typedefs that shouldn't collide since they are correct.
-// If this produces an issue... not my problem!
-// Learn how the types in the computer are named :P
-typedef unsigned char       byte;
-typedef unsigned short      word;
-typedef unsigned int        dword;
-typedef unsigned long long  qword;
+// If they do cause collisions then just change them manually.
+typedef unsigned char   byte;
+typedef unsigned int    dword;
 
 // Macro to strip just the filename out of the full path.
 #define __FILENAME__    (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
@@ -99,8 +96,8 @@ mmdbg_malloc(size_t size,
              int line)
 {
     void    *ptr;
-    dword   *buff_un;
-    dword   *buff_ov;
+    dword   *buff_un,
+            *buff_ov;
     
     buff_un = (dword *)malloc(size + 2 * sizeof(dword));
 
@@ -156,7 +153,7 @@ mmdbg_free(void *buffer,
     if (!(temp->flags & MMDBG_DOUBLE_FREE_BIT))
     {
         // Check for overrun
-        p = (char *)buffer + temp->size;
+        p = (byte *)buffer + temp->size;
         value = *(dword *)p;
         if (value != MMDBG_OVER_NUM)
         {
@@ -164,7 +161,7 @@ mmdbg_free(void *buffer,
         }
 
         // Check for underrun
-        p = (char *)buffer - 4;
+        p = (byte *)buffer - 4;
         value = *(dword *)p;
         if (value != MMDBG_UNDER_NUM)
         {
@@ -190,8 +187,8 @@ mmdbg_node_append(mmdbg_node_t **head,
                   int line,
                   int size)
 {
-    mmdbg_node_t    *new_node;
-    mmdbg_node_t    *temp;
+    mmdbg_node_t    *new_node,
+                    *temp;
 
     // Allocate and fill new node
     new_node = (mmdbg_node_t *)malloc(sizeof(mmdbg_node_t));
@@ -229,8 +226,8 @@ void
 mmdbg_node_remove(mmdbg_node_t **head,
                   void *ptr)
 {
-    mmdbg_node_t    *temp;
-    mmdbg_node_t    *prev;
+    mmdbg_node_t    *temp,
+                    *prev;
 
     // First node contains the ptr.
     temp = *head;
@@ -272,7 +269,7 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
         if (!(temp->flags && MMDBG_FREE_BIT))
         {
             // Find overruns
-            p = (char *)temp->ptr + temp->size;
+            p = (byte *)temp->ptr + temp->size;
             value = *(dword *)p;
             if (value != MMDBG_OVER_NUM)
             {
@@ -280,7 +277,7 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
             }
 
             // Find underruns
-            p = (char *)temp->ptr - 4;
+            p = (byte *)temp->ptr - 4;
             value = *(dword *)p;
             if (value != MMDBG_UNDER_NUM)
             {
@@ -308,8 +305,8 @@ operator new(size_t size,
              int line)
 {
     void    *ptr;
-    dword   *buff_un;
-    dword   *buff_ov;
+    dword   *buff_un,
+            *buff_ov;
     
     buff_un = (dword *)malloc(size + 2 * sizeof(dword));
 
@@ -350,7 +347,7 @@ operator delete(void *buffer)
     }
 
     // Check for overrun
-    p = (char *)buffer + temp->size;
+    p = (byte *)buffer + temp->size;
     value = *(dword *)p;
     if (value != MMDBG_OVER_NUM)
     {
@@ -358,7 +355,7 @@ operator delete(void *buffer)
     }
 
     // Check for underrun
-    p = (char *)buffer - 4;
+    p = (byte *)buffer - 4;
     value = *(dword *)p;
     if (value != MMDBG_UNDER_NUM)
     {
@@ -416,7 +413,7 @@ mmdbg_print(FILE *stream)
         // Buffer Underruns
         if (temp->flags & MMDBG_UNDER_BIT)
         {
-            p = (char *)temp->ptr - 4;
+            p = (byte *)temp->ptr - 4;
             fprintf(stream, "BUFFER UNDERRUN:  0x%p (%s (%d))\n", p,
                                                                   temp->file,
                                                                   temp->line);
@@ -425,7 +422,7 @@ mmdbg_print(FILE *stream)
         // Buffer Overruns
         if (temp->flags & MMDBG_OVER_BIT)
         {
-            p = (char *)temp->ptr + temp->size;
+            p = (byte *)temp->ptr + temp->size;
             fprintf(stream, "BUFFER OVERRUN:   0x%p (%s (%d))\n", p,
                                                                   temp->file,
                                                                   temp->line);
