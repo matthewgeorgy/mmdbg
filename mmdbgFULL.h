@@ -68,7 +68,7 @@ void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 // MMDBG IMPLEMENTATION
 //////////////////////////////////////////////////
 
-// #define this symbol in exactly 1 AND ONLY 1 .c/.cpp file
+// #define this symbol in exactly 1 .c/.cpp file
 // before including the utility!
 // For example:
 //          #include <...>
@@ -127,7 +127,7 @@ mmdbg_free(void *buffer,
     dword           value;
     void            *p;
 
-    // Set the 'freed' (or 'double freed') flag(s)
+    // Set the 'freed' (or 'double freed') flag(s) if necessary
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
@@ -150,6 +150,8 @@ mmdbg_free(void *buffer,
         temp = temp->next;
     }
 
+    // After (potentially) setting the 'double freed' flag, proceed to
+    // check for any buffer runs and then free the ptr.
     if (!(temp->flags & MMDBG_DOUBLE_FREE_BIT))
     {
         // Check for overrun
@@ -261,8 +263,8 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
 ////////////////////
 
 // Counters for new and delete
-static int      mmdbg_new_cnt;
-static int      mmdbg_delete_cnt;
+static int mmdbg_new_cnt;
+static int mmdbg_delete_cnt;
 
 void*
 operator new(size_t size,
