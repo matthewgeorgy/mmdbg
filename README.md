@@ -42,8 +42,8 @@ Adding MMDbg to your project is very simple. First you just add the file itself 
 
 Currently, MMDbg can report the following memory related information:
 
-    ..* Total calls to `malloc()`, `free()`, `new`, and `delete
-    ..* Total amount of data allocated
-    ..* Memory Leaks
-    ..* Buffer Overruns/Underruns
-    ..* Free-after-free*
+* Total calls to `malloc()`, `free()`, `new`, and `delete`
+* Total amount of data allocated
+* Memory Leaks
+* Buffer Overruns/Underruns
+* Free-after-free*
