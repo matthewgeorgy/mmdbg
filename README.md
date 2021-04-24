@@ -47,3 +47,34 @@ Currently, MMDbg can report the following memory related information:
 * Memory Leaks
 * Buffer Overruns/Underruns
 * Free-after-free*
+
+After calling `mmdbg_print(...)`, it will print out memory information in a format like so:
+
+```
+=========================================================
+                    MMDBG OUTPUT
+=========================================================
+Total Mallocs: 10
+Total Frees:   9
+Total News:    10
+Total Deletes: 9
+Total Size:    80 bytes
+
+BUFFER UNDERRUN:  0x00601B88 (test.cpp (20))
+BUFFER OVERRUN:   0x00601B90 (test.cpp (20))
+BUFFER UNDERRUN:  0x00601BC0 (test.cpp (19))
+BUFFER OVERRUN:   0x00601BC8 (test.cpp (19))
+BUFFER UNDERRUN:  0x00601BF8 (test.cpp (20))
+BUFFER OVERRUN:   0x00601C00 (test.cpp (20))
+DOUBLE FREE:      0x00601D14 (test.cpp (40))
+UNFREED MEMORY:   0x00602084 (test.cpp (19))
+UNFREED MEMORY:   0x00601FA4 (test.cpp (20))
+=========================================================
+                    END OF OUTPUT
+=========================================================
+```
+
+The warning messages follow this format: `ERROR TYPE:   ADDRESS (FILENAME.c/cpp (LINE #))`. The meanings of each of these points tend to be consistent, but for some it varies. These will be described below.
+
+
+## Reading the output
