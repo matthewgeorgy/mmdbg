@@ -20,8 +20,8 @@ typedef unsigned int    dword;
 #define MMDBG_OVER_BIT          0x02
 #define MMDBG_UNDER_BIT         0x04
 #define MMDBG_DOUBLE_FREE_BIT   0x08 
-#define MMDBG_OVER_NUM          0xFFFFEEEE
-#define MMDBG_UNDER_NUM         0xBBBBAAAA
+#define MMDBG_OVER_NUM          0x192BA3A2
+#define MMDBG_UNDER_NUM         0x39D7A5DA
 
 ////////////////////
 // C
