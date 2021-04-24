@@ -50,10 +50,10 @@ typedef struct _TAG_mmdbg_node
 {
     void    *ptr;
     char    *file,
-    		*df_file;
+            *df_file;
     int     line,
-    		df_line,
-    		size;
+            df_line,
+            size;
     byte    flags;
     struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
