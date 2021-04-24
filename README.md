@@ -2,6 +2,7 @@
 
 MMDbg is a simple memory debugging utility for use with C/C++ projects. It works by overriding `malloc()`, `free()`, `new`, and `delete` with a custom implementation to collect information regarding memory usage. It's comprised of a single header file, making it easy to integrate into projects, and only requires a few things to get up and running
 
+
 ## Setup / Installation
 
 Adding MMDbg to your project is very simple. First you just add the file itself to your project, and then `#define` a few symbols before including it:
@@ -24,7 +25,18 @@ Adding MMDbg to your project is very simple. First you just add the file itself 
     #include <mmdbg.h>
     ```
 
-3) Finally, use the function `mmdbg_print(FILE *stream)` to print debugging information to a specified stream (ie, `stdout`, a `FILE *` handle, etc). To collect the most amount of information, call this function at the end of your `main()` function.
+3) Finally, use the function `mmdbg_print(FILE *stream)` to print debugging information to a specified stream (ie, `stdout`, a `FILE *` handle, etc). To collect the most amount of information, call this function at the end of your `main()` function:
+
+    ```
+    int main()
+    {
+        // ..
+        
+        mmdbg_print(stdout);
+        return 0;
+    }
+    ```
+
 
 ## Features
 
