@@ -23,3 +23,15 @@ Adding MMDbg to your project is very simple. First you just add the file itself 
     #define MMDBG_DEBUG
     #include <mmdbg.h>
     ```
+
+3) Finally, use the function `mmdbg_print(FILE *stream)` to print debugging information to a specified stream (ie, `stdout`, a `FILE *` handle, etc). To collect the most amount of information, call this function at the end of your `main()` function.
+
+## Features
+
+Currently, MMDbg can report the following memory related information:
+
+    - Total calls to `malloc()`, `free()`, `new`, and `delete
+    - Total amount of data allocated
+    - Memory Leaks
+    - Buffer Overruns/Underruns
+    - Free-after-free*
