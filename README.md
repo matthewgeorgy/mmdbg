@@ -78,3 +78,26 @@ The warning messages follow this format: `ERROR TYPE:   ADDRESS (FILENAME.c/cpp 
 
 
 ## Reading the output
+
+Memory Leak (UNFREED MEMORY):
+
+* In the case of a memory leak, the address provided by MMDbg is the actual address of the memory that was allocated, either via `malloc()` or `new`.
+* The File + Line # are the File + Line # in the project where this memory was allocated.
+
+Buffer Overrun/Underrun:
+    
+* MMDbg works by allocating an extra 4 bytes on each end of the buffer you allocated, writes a magic number to these addresses, and then makes sure the data wasn't overwritten when `free()` or `delete` is called (X = extra memory, B = original buffer):
+* 
+* XXXXBBBBXXXX
+* 0123456789ABCDEF
+* 
+* As such, the pointer provided by this type of warning is the starting address of whatever extra buffer was overwritten.
+* File + Line # are the same as for memory leaks.
+
+Free-after-free (DOUBLE FREE):
+
+* Here, the pointer is like for Memory Leaks (aka, the actual address of memory allocated). However, the File + Line # is more complicated.
+* In C, `free()` is just a function, which makes it very easy to override (namely, to wrap file `__FILE__` and `__LINE__`). This makes obtaining the File + Line # of where `free()` was called trivial, meaning that MMDbg can actually tell you where in the code you did a free-after-free if you used `free()`.
+* With `delete`, however, this is not possible - that is, I haven't been able to find a way to implement this same behaviour yet.As such, if you did a double free using `delete`, then the File + Line # will just tell you where the memory was allocated. (Trust me, this annoys me too)
+* Thus, the only way to conclusively what the File + Line # represents is to actually just look at the source code and see for yourself. The information will be valuable either way, but it's definitely an annoying issue that I'm still trying to get around. 
+* On the bright side, however, because of the way that this free-after-free mechanism works, double frees won't (usually) cause your program to crash. Nice :)
