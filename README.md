@@ -1,6 +1,6 @@
 # MMDbg
 
-MMDbg is a simple memory debugging utility for use with C/C++ projects. It works by overriding `malloc()`, `free()`, `new`, and `delete` with a custom implementation to collect information regarding memory usage. It's comprised of a single header file, making it easy to integrate into projects, and only requires a few things to get up and running
+MMDbg is a simple memory debugging utility for use with C/C++ projects (similar to ASan - AddressSanitizer). It works by overriding `malloc()`, `free()`, `new`, and `delete` with a custom implementation to collect information regarding memory usage. It's comprised of a single header file, making it easy to integrate into projects, and only requires a few things to get up and running.
 
 
 ## Setup / Installation
