@@ -74,7 +74,7 @@ UNFREED MEMORY:   0x00601FA4 (test.cpp (20))
 =========================================================
 ```
 
-The warning messages follow this format: `ERROR TYPE:   ADDRESS (FILENAME.c/cpp (LINE #))`. The meanings of each of these points tend to be consistent, but for some it varies. These will be described below.
+The warning messages follow this format: `ERROR TYPE:   ADDRESS (FILENAME.c/cpp (LINE #))`. The meanings of each of these points tend to be consistent, but for some it varies. Simply navigating to the File + Line # specified in the output will always be helpful, but for the sake of completeness these will be described below.
 
 
 ## Reading the output
@@ -82,22 +82,15 @@ The warning messages follow this format: `ERROR TYPE:   ADDRESS (FILENAME.c/cpp 
 Memory Leak (UNFREED MEMORY):
 
 * In the case of a memory leak, the address provided by MMDbg is the actual address of the memory that was allocated, either via `malloc()` or `new`.
-* The File + Line # are the File + Line # in the project where this memory was allocated.
+* The File + Line # give the location in the project where this memory was allocated.
 
 Buffer Overrun/Underrun:
     
-* MMDbg works by allocating an extra 4 bytes on each end of the buffer you allocated, writes a magic number to these addresses, and then makes sure the data wasn't overwritten when `free()` or `delete` is called (X = extra memory, B = original buffer):
-* 
-* XXXXBBBBXXXX
-* 0123456789ABCDEF
-* 
-* As such, the pointer provided by this type of warning is the starting address of whatever extra buffer was overwritten.
+* MMDbg works by allocating an extra 4 bytes on each end of the buffer you allocated, writes a magic number to these addresses, and then makes sure the data wasn't overwritten when `free()` or `delete` is called. As such, the pointer provided by this type of warning is the starting address of the overwritten buffer.
 * File + Line # are the same as for memory leaks.
 
 Free-after-free (DOUBLE FREE):
 
-* Here, the pointer is like for Memory Leaks (aka, the actual address of memory allocated). However, the File + Line # is more complicated.
-* In C, `free()` is just a function, which makes it very easy to override (namely, to wrap file `__FILE__` and `__LINE__`). This makes obtaining the File + Line # of where `free()` was called trivial, meaning that MMDbg can actually tell you where in the code you did a free-after-free if you used `free()`.
-* With `delete`, however, this is not possible - that is, I haven't been able to find a way to implement this same behaviour yet.As such, if you did a double free using `delete`, then the File + Line # will just tell you where the memory was allocated. (Trust me, this annoys me too)
-* Thus, the only way to conclusively what the File + Line # represents is to actually just look at the source code and see for yourself. The information will be valuable either way, but it's definitely an annoying issue that I'm still trying to get around. 
+* Here, the pointer is like for Memory Leaks (aka, the actual address of memory allocated).
+* If the double free occurred by using `free()`, then the File + Line # will refer to where this second `free()` was called. If the double free occured using `delete`, however, the File + Line # will just refer to where the memory was initially allocated. This is something that isn't accounted for in the output (as simply navigating to the file + line # will be helpful anyway), and it's a result of the way that C++ handles the `delete` operator - `new` can easily be wrapped to use `__FILE__` and `__LINE__`, but `delete` not so much. Trust me, it annoys me too :(
 * On the bright side, however, because of the way that this free-after-free mechanism works, double frees won't (usually) cause your program to crash. Nice :)
