@@ -94,3 +94,9 @@ Free-after-free (DOUBLE FREE):
 * Here, the pointer is like for Memory Leaks (aka, the actual address of memory allocated).
 * If the double free occurred by using `free()`, then the File + Line # will refer to where this second `free()` was called. If the double free occured using `delete`, however, the File + Line # will just refer to where the memory was initially allocated. This is something that isn't accounted for in the output (as simply navigating to the file + line # will be helpful anyway), and it's a result of the way that C++ handles the `delete` operator - `new` can easily be wrapped to use `__FILE__` and `__LINE__`, but `delete` not so much. Trust me, it annoys me too :(
 * On the bright side, however, because of the way that this free-after-free mechanism works, double frees won't (usually) cause your program to crash. Nice :)
+
+
+## Notes
+
+* `new[]` and `delete[]` are currently unsupported by MMDbg, and probably will be for a while as I almost never use these. I might implement them at some point in the future, but don't hold your breath ¯\_(ツ)_/¯
+* MMDbg has not yet been tested with classes that utilize dynamic memory allocation within constructors/destructors. It is possible that MMDbg throws warnings about memory leaks due to the `free()`/`delete` calls living in the destructor, but this hasn't been tested yet. More info soon to come
