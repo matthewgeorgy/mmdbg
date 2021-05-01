@@ -341,6 +341,7 @@ void
 mmdbg_print(FILE *stream)
 {
     mmdbg_node_t    *temp;
+    void            *p;
 
     mmdbg_node_find_buffer_runs(mmdbg_alloc_head);
 
@@ -359,8 +360,6 @@ mmdbg_print(FILE *stream)
     temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
-        void *p;
-
         // Memory Leaks
         if (!(temp->flags & MMDBG_FREE_BIT))
         {
@@ -408,8 +407,8 @@ mmdbg_print(FILE *stream)
 // wrap malloc(), free(), new, and delete
 #ifdef MMDBG_DEBUG
 
-#define malloc(size)    mmdbg_malloc(size, __FILENAME__, __LINE__)
-#define free(buffer)    mmdbg_free(buffer, __FILENAME__, __LINE__)
+#define malloc(__size)      mmdbg_malloc(__size, __FILENAME__, __LINE__)
+#define free(__buffer)      mmdbg_free(__buffer, __FILENAME__, __LINE__)
 
  #ifdef __cplusplus
 
