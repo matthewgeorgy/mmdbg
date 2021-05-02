@@ -90,7 +90,7 @@ static mmdbg_node_t     *mmdbg_alloc_head = NULL;
 // C
 ////////////////////
 
-void*
+void *
 mmdbg_malloc(size_t size,
              const char *file,
              int line)
@@ -266,7 +266,7 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
 static int      mmdbg_new_cnt;
 static int      mmdbg_delete_cnt;
 
-void*
+void *
 operator new(size_t size,
              const char *file,
              int line)
