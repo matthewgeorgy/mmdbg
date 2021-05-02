@@ -81,10 +81,10 @@ void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 
 // Counters for malloc, free, total allocation,
 // and head node for the list
-static int      mmdbg_malloc_cnt;
-static int      mmdbg_free_cnt;
-static size_t   mmdbg_total_alloc;
-mmdbg_node_t    *mmdbg_alloc_head = NULL;
+static int              mmdbg_malloc_cnt;
+static int              mmdbg_free_cnt;
+static size_t           mmdbg_total_alloc;
+static mmdbg_node_t     *mmdbg_alloc_head = NULL;
 
 ////////////////////
 // C
@@ -263,8 +263,8 @@ mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
 ////////////////////
 
 // Counters for new and delete
-static int mmdbg_new_cnt;
-static int mmdbg_delete_cnt;
+static int      mmdbg_new_cnt;
+static int      mmdbg_delete_cnt;
 
 void*
 operator new(size_t size,
