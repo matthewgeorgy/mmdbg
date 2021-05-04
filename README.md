@@ -16,12 +16,13 @@ Adding MMDbg to your project is very simple. First you just add the file itself 
     #include <mmdbg.h>
     ```
 
-2) Then, in any files that you wish to debug memory in (this includes the file with `#define MMDBG_IMPl`, just `#define` the debug symbol:
+2) Then, in any files that you wish to debug memory in (this can include the file with `#define MMDBG_IMPl`, just `#define` the debug symbol:
     
     ```
     #include <...>
     #include <...>
     #define MMDBG_DEBUG
+    // #define MMDBG_IMPL (this can be here too)
     #include <mmdbg.h>
     ```
 
