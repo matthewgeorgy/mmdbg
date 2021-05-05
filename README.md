@@ -99,5 +99,6 @@ Free-after-free (DOUBLE FREE):
 
 ## Notes
 
+* MMDbg will probably collide with the use of `new` and object constructors (since malloc is just being called under the hood). Thus, this utility is best used for code that uses `new`/`malloc()` purely to allocate memory and not to call constructors.
 * `new[]` and `delete[]` are currently unsupported by MMDbg, and probably will be for a while as I almost never use these. I might implement them at some point in the future, but don't hold your breath ¯\_(ツ)_/¯
-* MMDbg has not yet been tested with classes that utilize dynamic memory allocation within constructors/destructors. It is possible that MMDbg throws warnings about memory leaks due to the `free()`/`delete` calls living in the destructor, but this hasn't been tested yet. More info soon to come
+* MMDbg has not yet been tested with classes that utilize dynamic memory allocation within constructors/destructors. It is possible that MMDbg throws warnings about memory leaks due to the `free()`/`delete` calls living in the destructor, but this hasn't been tested yet. More info soon to come.
