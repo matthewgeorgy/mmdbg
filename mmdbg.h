@@ -11,11 +11,11 @@ typedef unsigned char   byte;
 typedef unsigned int    dword;
 
 // Macro to strip just the filename out of the full path.
- #ifdef _WIN32
-#define __FILENAME__    (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
- #else
-#define __FILENAME__    (strrchr(__FILE__, '/ ') ? strrchr(__FILE__, '/') + 1 : __FILE__)
- #endif
+#if defined(_WIN32) || defined(_WIN64)
+	#define __FILENAME__    (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#else
+	#define __FILENAME__    (strrchr(__FILE__, '/ ') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#endif
 
 // Useful #define constants we use
 #define MMDBG_TRUE              1
@@ -26,6 +26,13 @@ typedef unsigned int    dword;
 #define MMDBG_DOUBLE_FREE_BIT   0x08 
 #define MMDBG_OVER_NUM          0x192BA3A2
 #define MMDBG_UNDER_NUM         0x39D7A5DA
+
+// For C vs. C++ compilation
+#ifdef __cplusplus
+	#define MMDBG_EXTERN	extern "C"
+#else
+	#define MMDBG_EXTERN	extern
+#endif
 
 ////////////////////
 // C
