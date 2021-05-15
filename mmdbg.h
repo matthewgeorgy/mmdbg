@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: fix any remaining alignments
+// TODO: add comments documenting the funcs
+
 // Perfectly legal typedefs that shouldn't collide since they are correct.
 // If they do cause collisions then just change them manually.
 typedef unsigned char   byte;
@@ -12,9 +15,9 @@ typedef unsigned int    dword;
 
 // Macro to strip just the filename out of the full path.
 #if defined(_WIN32) || defined(_WIN64)
-	#define __FILENAME__    (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+    #define __FILENAME__    (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #else
-	#define __FILENAME__    (strrchr(__FILE__, '/ ') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+    #define __FILENAME__    (strrchr(__FILE__, '/ ') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
 // Useful #define constants we use
@@ -29,18 +32,18 @@ typedef unsigned int    dword;
 
 // For C vs. C++ compilation
 #ifdef __cplusplus
-	#define MMDBG_EXTERN	extern "C"
+    #define MMDBG_EXTERN    extern "C"
 #else
-	#define MMDBG_EXTERN	extern
+    #define MMDBG_EXTERN    extern
 #endif
 
 // Defines NULL in C/C++ if not already defined (should be since <stdlib.h>)
 #ifndef NULL
-	#ifdef __cplusplus
-		#define NULL	0
-	#else
-		#define NULL	((void *)0)
-	#endif // __cplusplus
+    #ifdef __cplusplus
+        #define NULL    0
+    #else
+        #define NULL    ((void *)0)
+    #endif // __cplusplus
 #endif // NULL
 
 // Record structure for storing memory information
@@ -56,14 +59,14 @@ typedef struct _TAG_mmdbg_rec
     struct  _TAG_mmdbg_rec *next;
 } mmdbg_rec_t;
 
-MMDBG_EXTERN void	*mmdbg_malloc(size_t size, const char *file, int line);
-MMDBG_EXTERN void	mmdbg_free(void *buffer, const char *file, int line);
-MMDBG_EXTERN void	mmdbg_print(FILE *stream);
-MMDBG_EXTERN void	mmdbg_rec_append(mmdbg_rec_t **head, void *ptr, const char *file, int line, int size);
-MMDBG_EXTERN void	mmdbg_debug_memory();
+MMDBG_EXTERN void   *mmdbg_malloc(size_t size, const char *file, int line);
+MMDBG_EXTERN void   mmdbg_free(void *buffer, const char *file, int line);
+MMDBG_EXTERN void   mmdbg_print(FILE *stream);
+MMDBG_EXTERN void   mmdbg_rec_append(mmdbg_rec_t **head, void *ptr, const char *file, int line, int size);
+MMDBG_EXTERN void   mmdbg_debug_memory();
 #ifdef __cplusplus
-	void    		*operator new(size_t size, const char *file, int line);
-	void    		operator delete(void *buffer);
+    void            *operator new(size_t size, const char *file, int line);
+    void            operator delete(void *buffer);
 #endif // __cplusplus
 
 
@@ -127,7 +130,7 @@ mmdbg_free(void *buffer,
            const char *file,
            int line)
 {
-    mmdbg_rec_t    	*temp;
+    mmdbg_rec_t     *temp;
     dword           value;
     void            *p;
 
@@ -193,7 +196,7 @@ mmdbg_rec_append(mmdbg_rec_t **head,
                  int line,
                  int size)
 {
-    mmdbg_rec_t		*new_node,
+    mmdbg_rec_t     *new_node,
                     *temp;
 
     // Allocate and fill new node
@@ -230,9 +233,9 @@ mmdbg_rec_append(mmdbg_rec_t **head,
 void
 mmdbg_debug_memory()
 {
-    mmdbg_rec_t		*temp;
-    dword			value;
-    void			*p;
+    mmdbg_rec_t     *temp;
+    dword           value;
+    void            *p;
 
     temp = mmdbg_alloc_head;
     while (temp != NULL)
@@ -301,7 +304,7 @@ operator new(size_t size,
 void
 operator delete(void *buffer)
 {
-    mmdbg_rec_t    	*temp;
+    mmdbg_rec_t     *temp;
     dword           value;
     void            *p;
 
@@ -344,7 +347,7 @@ operator delete(void *buffer)
 void
 mmdbg_print(FILE *stream)
 {
-    mmdbg_rec_t    	*temp;
+    mmdbg_rec_t     *temp;
     void            *p;
 
     mmdbg_debug_memory();
