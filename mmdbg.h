@@ -38,9 +38,9 @@ typedef unsigned int    dword;
 // C
 ////////////////////
 
-void    *mmdbg_malloc(size_t size, const char *file, int line);
-void    mmdbg_free(void *buffer, const char *file, int line);
-void    mmdbg_print(FILE *stream);
+MMDBG_EXTERN void    *mmdbg_malloc(size_t size, const char *file, int line);
+MMDBG_EXTERN void    mmdbg_free(void *buffer, const char *file, int line);
+MMDBG_EXTERN void    mmdbg_print(FILE *stream);
 
  #ifdef __cplusplus
 
@@ -69,9 +69,9 @@ typedef struct _TAG_mmdbg_node
     struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
-void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, const char *file, int line, int size);
-void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
-void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
+MMDBG_EXTERN void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, const char *file, int line, int size);
+MMDBG_EXTERN void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
+MMDBG_EXTERN void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 
 
 
