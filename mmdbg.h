@@ -34,29 +34,7 @@ typedef unsigned int    dword;
 	#define MMDBG_EXTERN	extern
 #endif
 
-////////////////////
-// C
-////////////////////
-
-MMDBG_EXTERN void    *mmdbg_malloc(size_t size, const char *file, int line);
-MMDBG_EXTERN void    mmdbg_free(void *buffer, const char *file, int line);
-MMDBG_EXTERN void    mmdbg_print(FILE *stream);
-
- #ifdef __cplusplus
-
-////////////////////
-// C++
-////////////////////
-
-void    *operator new(size_t size, const char *file, int line);
-void    operator delete(void *buffer);
-
- #endif // __cplusplus
-
-////////////////////
-// Node
-////////////////////
-
+// Record structure for storing memory information
 typedef struct _TAG_mmdbg_node
 {
     void    *ptr;
@@ -69,9 +47,19 @@ typedef struct _TAG_mmdbg_node
     struct  _TAG_mmdbg_node *next;
 } mmdbg_node_t;
 
-MMDBG_EXTERN void    mmdbg_node_append(mmdbg_node_t **head, void *ptr, const char *file, int line, int size);
-MMDBG_EXTERN void    mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
-MMDBG_EXTERN void    mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
+
+MMDBG_EXTERN void	*mmdbg_malloc(size_t size, const char *file, int line);
+MMDBG_EXTERN void	mmdbg_free(void *buffer, const char *file, int line);
+MMDBG_EXTERN void	mmdbg_print(FILE *stream);
+
+#ifdef __cplusplus
+	void    		*operator new(size_t size, const char *file, int line);
+	void    		operator delete(void *buffer);
+#endif // __cplusplus
+
+MMDBG_EXTERN void	mmdbg_node_append(mmdbg_node_t **head, void *ptr, const char *file, int line, int size);
+MMDBG_EXTERN void	mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
+MMDBG_EXTERN void	mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 
 
 
