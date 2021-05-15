@@ -47,18 +47,15 @@ typedef struct _TAG_mmdbg_rec
     struct  _TAG_mmdbg_rec *next;
 } mmdbg_rec_t;
 
-
 MMDBG_EXTERN void	*mmdbg_malloc(size_t size, const char *file, int line);
 MMDBG_EXTERN void	mmdbg_free(void *buffer, const char *file, int line);
 MMDBG_EXTERN void	mmdbg_print(FILE *stream);
-
+MMDBG_EXTERN void	mmdbg_rec_append(mmdbg_rec_t **head, void *ptr, const char *file, int line, int size);
+MMDBG_EXTERN void	mmdbg_debug_memory();
 #ifdef __cplusplus
 	void    		*operator new(size_t size, const char *file, int line);
 	void    		operator delete(void *buffer);
 #endif // __cplusplus
-
-MMDBG_EXTERN void	mmdbg_rec_append(mmdbg_rec_t **head, void *ptr, const char *file, int line, int size);
-MMDBG_EXTERN void	mmdbg_rec_find_buffer_runs(mmdbg_rec_t *head);
 
 
 
@@ -222,13 +219,13 @@ mmdbg_rec_append(mmdbg_rec_t **head,
 // Go through the list and find any buffer overruns/underruns,
 // and then update each ptr's node accordingly
 void
-mmdbg_rec_find_buffer_runs(mmdbg_rec_t *head)
+mmdbg_debug_memory()
 {
-    mmdbg_rec_t    *temp;
-    dword           value;
-    void            *p;
+    mmdbg_rec_t		*temp;
+    dword			value;
+    void			*p;
 
-    temp = head;
+    temp = mmdbg_alloc_head;
     while (temp != NULL)
     {
         if (!(temp->flags && MMDBG_FREE_BIT))
@@ -338,10 +335,10 @@ operator delete(void *buffer)
 void
 mmdbg_print(FILE *stream)
 {
-    mmdbg_rec_t    *temp;
+    mmdbg_rec_t    	*temp;
     void            *p;
 
-    mmdbg_rec_find_buffer_runs(mmdbg_alloc_head);
+    mmdbg_debug_memory();
 
     fprintf(stream, "\n=========================================================\n");
     fprintf(stream, "                    MMDBG OUTPUT\n");
