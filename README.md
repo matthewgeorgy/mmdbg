@@ -1,6 +1,6 @@
 # MMDbg
 
-MMDbg is a simple memory debugging utility for use with C/C++ projects (similar to ASan - AddressSanitizer). It works by overriding `malloc()`, `free()`, `new`, and `delete` with a custom implementation to collect information regarding memory usage. It's comprised of a single header file, making it easy to integrate into projects, and only requires a few things to get up and running.
+MMDbg is a simple heap memory debugging utility for use with C/C++ projects (similar to ASan - AddressSanitizer). It works by overriding `malloc()`, `free()`, `new`, and `delete` with a custom implementation to collect information regarding memory usage. It's comprised of a single header file, making it easy to integrate into projects, and only requires a few things to get up and running.
 
 
 ## Setup / Installation
@@ -16,12 +16,13 @@ Adding MMDbg to your project is very simple. First you just add the file itself 
     #include <mmdbg.h>
     ```
 
-2) Then, in any files that you wish to debug memory in (this includes the file with `#define MMDBG_IMPl`, just `#define` the debug symbol:
+2) Then, in any files that you wish to debug memory in (this can include the file with `#define MMDBG_IMPl`, just `#define` the debug symbol:
     
     ```
     #include <...>
     #include <...>
     #define MMDBG_DEBUG
+    // #define MMDBG_IMPL (this can be here too)
     #include <mmdbg.h>
     ```
 
@@ -98,5 +99,6 @@ Free-after-free (DOUBLE FREE):
 
 ## Notes
 
+* MMDbg will probably collide with the use of `new` and object constructors (since malloc is just being called under the hood). Thus, this utility is best used for code that uses `new`/`malloc()` purely to allocate memory and not to call constructors.
 * `new[]` and `delete[]` are currently unsupported by MMDbg, and probably will be for a while as I almost never use these. I might implement them at some point in the future, but don't hold your breath ¯\_(ツ)_/¯
-* MMDbg has not yet been tested with classes that utilize dynamic memory allocation within constructors/destructors. It is possible that MMDbg throws warnings about memory leaks due to the `free()`/`delete` calls living in the destructor, but this hasn't been tested yet. More info soon to come
+* MMDbg has not yet been tested with classes that utilize dynamic memory allocation within constructors/destructors. It is possible that MMDbg throws warnings about memory leaks due to the `free()`/`delete` calls living in the destructor, but this hasn't been tested yet. More info soon to come.
