@@ -34,6 +34,15 @@ typedef unsigned int    dword;
 	#define MMDBG_EXTERN	extern
 #endif
 
+// Defines NULL in C/C++ if not already defined (should be since <stdlib.h>)
+#ifndef NULL
+	#ifdef __cplusplus
+		#define NULL	0
+	#else
+		#define NULL	((void *)0)
+	#endif // __cplusplus
+#endif // NULL
+
 // Record structure for storing memory information
 typedef struct _TAG_mmdbg_rec
 {
