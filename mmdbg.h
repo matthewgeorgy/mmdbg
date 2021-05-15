@@ -118,7 +118,7 @@ mmdbg_free(void *buffer,
            const char *file,
            int line)
 {
-    mmdbg_rec_t    *temp;
+    mmdbg_rec_t    	*temp;
     dword           value;
     void            *p;
 
@@ -179,12 +179,12 @@ mmdbg_free(void *buffer,
 
 void
 mmdbg_rec_append(mmdbg_rec_t **head,
-                  void *ptr,
-                  const char *file,
-                  int line,
-                  int size)
+                 void *ptr,
+                 const char *file,
+                 int line,
+                 int size)
 {
-    mmdbg_rec_t    *new_node,
+    mmdbg_rec_t		*new_node,
                     *temp;
 
     // Allocate and fill new node
@@ -292,7 +292,7 @@ operator new(size_t size,
 void
 operator delete(void *buffer)
 {
-    mmdbg_rec_t    *temp;
+    mmdbg_rec_t    	*temp;
     dword           value;
     void            *p;
 
@@ -412,6 +412,6 @@ mmdbg_print(FILE *stream)
 
  #endif // __cplusplus
 
-#endif
+#endif // MMDBG_DEBUG
 
 #endif // MMDBG_H
