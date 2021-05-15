@@ -35,7 +35,7 @@ typedef unsigned int    dword;
 #endif
 
 // Record structure for storing memory information
-typedef struct _TAG_mmdbg_node
+typedef struct _TAG_mmdbg_rec
 {
     void    *ptr;
     char    *file,
@@ -44,8 +44,8 @@ typedef struct _TAG_mmdbg_node
             df_line,
             size;
     byte    flags;
-    struct  _TAG_mmdbg_node *next;
-} mmdbg_node_t;
+    struct  _TAG_mmdbg_rec *next;
+} mmdbg_rec_t;
 
 
 MMDBG_EXTERN void	*mmdbg_malloc(size_t size, const char *file, int line);
@@ -57,9 +57,8 @@ MMDBG_EXTERN void	mmdbg_print(FILE *stream);
 	void    		operator delete(void *buffer);
 #endif // __cplusplus
 
-MMDBG_EXTERN void	mmdbg_node_append(mmdbg_node_t **head, void *ptr, const char *file, int line, int size);
-MMDBG_EXTERN void	mmdbg_node_remove(mmdbg_node_t **head, void *ptr);
-MMDBG_EXTERN void	mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
+MMDBG_EXTERN void	mmdbg_rec_append(mmdbg_rec_t **head, void *ptr, const char *file, int line, int size);
+MMDBG_EXTERN void	mmdbg_rec_find_buffer_runs(mmdbg_rec_t *head);
 
 
 
@@ -83,7 +82,7 @@ MMDBG_EXTERN void	mmdbg_node_find_buffer_runs(mmdbg_node_t *head);
 static int              mmdbg_malloc_cnt;
 static int              mmdbg_free_cnt;
 static size_t           mmdbg_total_alloc;
-static mmdbg_node_t     *mmdbg_alloc_head = NULL;
+static mmdbg_rec_t     *mmdbg_alloc_head = NULL;
 
 ////////////////////
 // C
@@ -110,7 +109,7 @@ mmdbg_malloc(size_t size,
 
         mmdbg_malloc_cnt++;
         mmdbg_total_alloc += size;
-        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line, size);
+        mmdbg_rec_append(&mmdbg_alloc_head, ptr, file, line, size);
     }
     
     // return ptr regardless
@@ -122,7 +121,7 @@ mmdbg_free(void *buffer,
            const char *file,
            int line)
 {
-    mmdbg_node_t    *temp;
+    mmdbg_rec_t    *temp;
     dword           value;
     void            *p;
 
@@ -182,17 +181,17 @@ mmdbg_free(void *buffer,
 ////////////////////
 
 void
-mmdbg_node_append(mmdbg_node_t **head,
+mmdbg_rec_append(mmdbg_rec_t **head,
                   void *ptr,
                   const char *file,
                   int line,
                   int size)
 {
-    mmdbg_node_t    *new_node,
+    mmdbg_rec_t    *new_node,
                     *temp;
 
     // Allocate and fill new node
-    new_node = (mmdbg_node_t *)malloc(sizeof(mmdbg_node_t));
+    new_node = (mmdbg_rec_t *)malloc(sizeof(mmdbg_rec_t));
     new_node->ptr = ptr;
     new_node->file = (char *)file;
     new_node->line = line;
@@ -223,9 +222,9 @@ mmdbg_node_append(mmdbg_node_t **head,
 // Go through the list and find any buffer overruns/underruns,
 // and then update each ptr's node accordingly
 void
-mmdbg_node_find_buffer_runs(mmdbg_node_t *head)
+mmdbg_rec_find_buffer_runs(mmdbg_rec_t *head)
 {
-    mmdbg_node_t    *temp;
+    mmdbg_rec_t    *temp;
     dword           value;
     void            *p;
 
@@ -286,7 +285,7 @@ operator new(size_t size,
 
         mmdbg_new_cnt++;
         mmdbg_total_alloc += size;
-        mmdbg_node_append(&mmdbg_alloc_head, ptr, file, line, size);
+        mmdbg_rec_append(&mmdbg_alloc_head, ptr, file, line, size);
     }
 
     // return ptr regardless
@@ -296,7 +295,7 @@ operator new(size_t size,
 void
 operator delete(void *buffer)
 {
-    mmdbg_node_t    *temp;
+    mmdbg_rec_t    *temp;
     dword           value;
     void            *p;
 
@@ -339,10 +338,10 @@ operator delete(void *buffer)
 void
 mmdbg_print(FILE *stream)
 {
-    mmdbg_node_t    *temp;
+    mmdbg_rec_t    *temp;
     void            *p;
 
-    mmdbg_node_find_buffer_runs(mmdbg_alloc_head);
+    mmdbg_rec_find_buffer_runs(mmdbg_alloc_head);
 
     fprintf(stream, "\n=========================================================\n");
     fprintf(stream, "                    MMDBG OUTPUT\n");
